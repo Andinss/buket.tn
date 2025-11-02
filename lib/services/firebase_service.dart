@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../models/bouquet.dart';
 import '../models/cart_item.dart';
 import '../models/order.dart';
+import '../models/address.dart';
 
 class FirebaseService {
   final FirebaseAuth auth = FirebaseAuth.instance;
@@ -325,6 +326,151 @@ class FirebaseService {
       return totalCount;
     } catch (e) {
       debugPrint('Error getting cart count: $e');
+      return 0;
+    }
+  }
+
+  Future<String> addAddress(String uid, Address address) async {
+    try {
+      final addressRef = db.collection('users').doc(uid).collection('addresses');
+      
+      if (address.isDefault) {
+        await _unsetAllDefaultAddresses(uid);
+      }
+      
+      final docRef = await addressRef.add(address.toMap());
+      debugPrint('Address added: ${docRef.id}');
+      return docRef.id;
+    } catch (e) {
+      debugPrint('Error adding address: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateAddress(String uid, String addressId, Address address) async {
+    try {
+      final addressRef = db.collection('users').doc(uid).collection('addresses').doc(addressId);
+      
+      if (address.isDefault) {
+        await _unsetAllDefaultAddresses(uid, excludeId: addressId);
+      }
+      
+      await addressRef.update(address.toMap());
+      debugPrint('Address updated: $addressId');
+    } catch (e) {
+      debugPrint('Error updating address: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAddress(String uid, String addressId) async {
+    try {
+      await db.collection('users').doc(uid).collection('addresses').doc(addressId).delete();
+      debugPrint('Address deleted: $addressId');
+    } catch (e) {
+      debugPrint('Error deleting address: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> setDefaultAddress(String uid, String addressId) async {
+    try {
+      await _unsetAllDefaultAddresses(uid);
+      
+      await db.collection('users').doc(uid).collection('addresses').doc(addressId).update({
+        'isDefault': true,
+      });
+      
+      debugPrint('Default address set: $addressId');
+    } catch (e) {
+      debugPrint('Error setting default address: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _unsetAllDefaultAddresses(String uid, {String? excludeId}) async {
+    try {
+      final snapshot = await db.collection('users').doc(uid).collection('addresses')
+          .where('isDefault', isEqualTo: true)
+          .get();
+      
+      final batch = db.batch();
+      
+      for (var doc in snapshot.docs) {
+        if (excludeId != null && doc.id == excludeId) continue;
+        batch.update(doc.reference, {'isDefault': false});
+      }
+      
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Error unsetting default addresses: $e');
+    }
+  }
+
+  Stream<List<Address>> getAddresses(String uid) {
+    return db.collection('users').doc(uid).collection('addresses')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            try {
+              return Address.fromDoc(doc);
+            } catch (e) {
+              debugPrint('Error parsing address ${doc.id}: $e');
+              return null;
+            }
+          }).whereType<Address>().toList();
+        })
+        .handleError((error) {
+          debugPrint('Error getting addresses: $error');
+          return <Address>[];
+        });
+  }
+
+  Future<Address?> getDefaultAddress(String uid) async {
+    try {
+      final snapshot = await db.collection('users').doc(uid).collection('addresses')
+          .where('isDefault', isEqualTo: true)
+          .limit(1)
+          .get();
+      
+      if (snapshot.docs.isEmpty) {
+
+        final allSnapshot = await db.collection('users').doc(uid).collection('addresses')
+            .orderBy('createdAt', descending: true)
+            .limit(1)
+            .get();
+        
+        if (allSnapshot.docs.isEmpty) return null;
+        return Address.fromDoc(allSnapshot.docs.first);
+      }
+      
+      return Address.fromDoc(snapshot.docs.first);
+    } catch (e) {
+      debugPrint('Error getting default address: $e');
+      return null;
+    }
+  }
+
+  Future<Address?> getAddress(String uid, String addressId) async {
+    try {
+      final doc = await db.collection('users').doc(uid).collection('addresses').doc(addressId).get();
+      
+      if (!doc.exists) return null;
+      
+      return Address.fromDoc(doc);
+    } catch (e) {
+      debugPrint('Error getting address: $e');
+      return null;
+    }
+  }
+
+  Future<int> getAddressCount(String uid) async {
+    try {
+      final snapshot = await db.collection('users').doc(uid).collection('addresses').get();
+      return snapshot.docs.length;
+    } catch (e) {
+      debugPrint('Error counting addresses: $e');
       return 0;
     }
   }

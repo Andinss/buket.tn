@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+// ignore: unused_import
+import '../providers/address_provider.dart';
+import 'address_list_page.dart';
 import 'main_navigation.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   void _navigateToPage(BuildContext context, int index) {
-    // Navigate to specific page using Navigator
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => MainNavigation(initialIndex: index)),
@@ -26,6 +28,7 @@ class ProfilePage extends StatelessWidget {
       displayName = auth.user!.email!.split('@').first;
     }
 
+    // ignore: unused_local_variable
     String fullAddress = '';
     if (auth.address.isNotEmpty) {
       fullAddress = auth.address;
@@ -193,11 +196,14 @@ class ProfilePage extends StatelessWidget {
                     color: const Color(0xFFDB2777),
                   ),
                   const Divider(height: 1),
-                  _buildMenuTile(
+                 _buildMenuTile(
                     icon: Icons.location_on,
                     title: 'Alamat',
-                    subtitle: fullAddress.isEmpty ? 'Kelola alamat pengiriman' : fullAddress,
-                    onTap: () => _showAddressDialog(context, auth),
+                    subtitle: 'Kelola alamat pengiriman',
+                    onTap: () => Navigator.push(
+                      context, 
+                      MaterialPageRoute(builder: (context) => const AddressListPage())
+                    ),
                     color: const Color(0xFFDB2777),
                   ),
                   if (!isSeller) const Divider(height: 1),
@@ -512,6 +518,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
+    // ignore: unused_element
     void _showAddressDialog(BuildContext context, AuthProvider auth) {
       final addressController = TextEditingController(text: auth.address);
       final cityController = TextEditingController(text: auth.city);

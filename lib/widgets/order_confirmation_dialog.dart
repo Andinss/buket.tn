@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 
 import '../models/cart_item.dart';
+import '../models/address.dart';
 import '../providers/auth_provider.dart';
-// ignore: unused_import
-import '../services/firebase_service.dart';
+import '../providers/address_provider.dart';
 import '../utils/helpers.dart';
+import '../pages/address_list_page.dart';
 
 class OrderConfirmationDialog extends StatefulWidget {
   final List<CartItem> items;
@@ -26,11 +27,6 @@ class OrderConfirmationDialog extends StatefulWidget {
 }
 
 class _OrderConfirmationDialogState extends State<OrderConfirmationDialog> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _cityController = TextEditingController();
-  final TextEditingController _postalCodeController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   
   String _selectedPaymentMethod = 'Transfer Bank';
@@ -40,71 +36,35 @@ class _OrderConfirmationDialogState extends State<OrderConfirmationDialog> {
     'Bayar di Tempat (COD)'
   ];
 
+  Address? _selectedAddress;
+
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _loadDefaultAddress();
   }
 
-  Future<void> _loadUserData() async {
-    try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.auth.user!.uid)
-          .get();
-
-      if (userDoc.exists) {
-        final data = userDoc.data()!;
-        setState(() {
-          _nameController.text = data['displayName']?.toString() ?? '';
-          _phoneController.text = data['phoneNumber']?.toString() ?? '';
-          _addressController.text = data['address']?.toString() ?? '';
-          _cityController.text = data['city']?.toString() ?? '';
-          _postalCodeController.text = data['postalCode']?.toString() ?? '';
-          
-          String paymentMethod = data['paymentMethod']?.toString() ?? 'Transfer Bank';
-          _selectedPaymentMethod = paymentMethod.isEmpty ? 'Transfer Bank' : paymentMethod;
-        });
-      } else {
-        setState(() {
-          _nameController.text = widget.auth.user?.displayName ?? '';
-          _phoneController.text = widget.auth.phoneNumber;
-          _addressController.text = widget.auth.address;
-          _cityController.text = widget.auth.city;
-          _postalCodeController.text = widget.auth.postalCode;
-          _selectedPaymentMethod = widget.auth.paymentMethod.isNotEmpty 
-              ? (widget.auth.paymentMethod == 'Credit Card' ? 'Transfer Bank' : widget.auth.paymentMethod)
-              : 'Transfer Bank';
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading user data: $e');
+  Future<void> _loadDefaultAddress() async {
+    final addressProvider = Provider.of<AddressProvider>(context, listen: false);
+    
+    if (addressProvider.addresses.isNotEmpty) {
       setState(() {
-        _nameController.text = widget.auth.user?.displayName ?? '';
-        _phoneController.text = widget.auth.phoneNumber;
-        _addressController.text = widget.auth.address;
-        _cityController.text = widget.auth.city;
-        _postalCodeController.text = widget.auth.postalCode;
-        _selectedPaymentMethod = widget.auth.paymentMethod.isNotEmpty 
-            ? (widget.auth.paymentMethod == 'Credit Card' ? 'Transfer Bank' : widget.auth.paymentMethod)
-            : 'Transfer Bank';
+        _selectedAddress = addressProvider.defaultAddress;
       });
     }
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    _cityController.dispose();
-    _postalCodeController.dispose();
     _notesController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // ignore: unused_local_variable
+    final addressProvider = Provider.of<AddressProvider>(context);
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       insetPadding: const EdgeInsets.all(20),
@@ -147,58 +107,39 @@ class _OrderConfirmationDialogState extends State<OrderConfirmationDialog> {
                   children: [
                     const SizedBox(height: 16),
                     
-                    _buildSectionHeader('Informasi Pengiriman'),
-                    const SizedBox(height: 16),
-                    
-                    _buildFormField(
-                      label: 'Nama Penerima',
-                      controller: _nameController,
-                      icon: Icons.person,
-                      hintText: 'Masukkan nama penerima',
-                    ),
+                    _buildSectionHeader('Alamat Pengiriman'),
                     const SizedBox(height: 12),
                     
-                    _buildFormField(
-                      label: 'Nomor Telepon',
-                      controller: _phoneController,
-                      icon: Icons.phone,
-                      hintText: 'Contoh: 081234567890',
-                      keyboardType: TextInputType.phone,
-                    ),
+                    _selectedAddress != null
+                        ? _buildSelectedAddress(_selectedAddress!)
+                        : _buildNoAddress(),
+                    
+                    const SizedBox(height: 20),
+                    _buildDivider(),
+                    const SizedBox(height: 20),
+                    
+                    _buildSectionHeader('Catatan Pesanan (Opsional)'),
                     const SizedBox(height: 12),
                     
-                    _buildFormField(
-                      label: 'Alamat Lengkap',
-                      controller: _addressController,
-                      icon: Icons.location_on,
-                      hintText: 'Masukkan alamat lengkap',
-                      maxLines: 2,
-                    ),
-                    const SizedBox(height: 12),
-                    
-                    _buildFormField(
-                      label: 'Kota/Kabupaten',
-                      controller: _cityController,
-                      icon: Icons.location_city,
-                      hintText: 'Masukkan kota/kabupaten',
-                    ),
-                    const SizedBox(height: 12),
-                    
-                    _buildFormField(
-                      label: 'Kode Pos',
-                      controller: _postalCodeController,
-                      icon: Icons.markunread_mailbox,
-                      hintText: 'Masukkan kode pos',
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 12),
-                    
-                    _buildFormField(
-                      label: 'Catatan (Opsional)',
+                    TextField(
                       controller: _notesController,
-                      icon: Icons.note,
-                      hintText: 'Tambahkan catatan untuk kurir',
                       maxLines: 2,
+                      decoration: InputDecoration(
+                        hintText: 'Tambahkan catatan untuk penjual...',
+                        prefixIcon: const Icon(Icons.note, color: Color(0xFFFF6B9D)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFFF6B9D), width: 2),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
                     ),
                     
                     const SizedBox(height: 20),
@@ -269,21 +210,21 @@ class _OrderConfirmationDialogState extends State<OrderConfirmationDialog> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _nameController.text.isEmpty || 
-                                _phoneController.text.isEmpty || 
-                                _addressController.text.isEmpty
+                      onPressed: _selectedAddress == null
                           ? null
                           : () {
                               widget.onConfirm(
-                                _phoneController.text, 
-                                _addressController.text,
-                                _cityController.text,
-                                _postalCodeController.text,
-                                _selectedPaymentMethod
+                                _selectedAddress!.phoneNumber,
+                                _selectedAddress!.fullAddress,
+                                _selectedAddress!.city,
+                                _selectedAddress!.postalCode,
+                                _selectedPaymentMethod,
                               );
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6B9D),
+                        backgroundColor: _selectedAddress == null 
+                            ? Colors.grey 
+                            : const Color(0xFFFF6B9D),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -292,7 +233,9 @@ class _OrderConfirmationDialogState extends State<OrderConfirmationDialog> {
                         elevation: 2,
                       ),
                       child: Text(
-                        'Bayar ${formatRupiah(widget.total)}',
+                        _selectedAddress == null 
+                            ? 'Pilih Alamat Terlebih Dahulu'
+                            : 'Bayar ${formatRupiah(widget.total)}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -309,6 +252,141 @@ class _OrderConfirmationDialogState extends State<OrderConfirmationDialog> {
     );
   }
 
+  Widget _buildSelectedAddress(Address address) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF0F5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFF6B9D), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6B9D),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  address.label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () async {
+                  final selected = await Navigator.push<Address>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddressListPage(isSelectMode: true),
+                    ),
+                  );
+                  
+                  if (selected != null) {
+                    setState(() {
+                      _selectedAddress = selected;
+                    });
+                  }
+                },
+                icon: const Icon(Icons.edit, size: 16),
+                label: const Text('Ubah'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFFF6B9D),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            address.recipientName,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2D3142),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            address.phoneNumber,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            address.formattedAddress,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade700,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoAddress() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.location_off, size: 40, color: Colors.grey.shade400),
+          const SizedBox(height: 12),
+          const Text(
+            'Belum ada alamat',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2D3142),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Tambahkan alamat pengiriman',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddressListPage(),
+                ),
+              );
+              _loadDefaultAddress();
+            },
+            icon: const Icon(Icons.add, size: 16),
+            label: const Text('Tambah Alamat'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6B9D),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
@@ -317,51 +395,6 @@ class _OrderConfirmationDialogState extends State<OrderConfirmationDialog> {
         fontWeight: FontWeight.bold,
         color: Color(0xFF2D3142),
       ),
-    );
-  }
-
-  Widget _buildFormField({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    String? hintText,
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2D3142),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          decoration: InputDecoration(
-            hintText: hintText,
-            prefixIcon: Icon(icon, color: const Color(0xFFFF6B9D)),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFFF6B9D), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
