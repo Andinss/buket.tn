@@ -131,30 +131,43 @@ class _DetailPageState extends State<DetailPage> {
                     ),
                   ),
                   const Text('Detail Product', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
-                  GestureDetector(
-                    onTap: () async {
-                      await favoriteProvider.toggleFavorite(widget.bouquet.id);
-                      if (!isFavorite) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Ditambahkan ke favorit!'),
-                            backgroundColor: const Color(0xFFFF6B9D),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            action: SnackBarAction(
-                              label: 'Lihat',
-                              textColor: Colors.white,
-                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FavoritePage())),
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(12)),
-                      child: Icon(isFavorite ? Icons.favorite : Icons.favorite_border, color: const Color(0xFFFF6B9D), size: 20),
-                    ),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _navigateToCart,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(12)),
+                          child: const Icon(Icons.shopping_cart_outlined, color: Color(0xFFFF6B9D), size: 20),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: () async {
+                          await favoriteProvider.toggleFavorite(widget.bouquet.id);
+                          if (!isFavorite) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Ditambahkan ke favorit!'),
+                                backgroundColor: const Color(0xFFFF6B9D),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                action: SnackBarAction(
+                                  label: 'Lihat',
+                                  textColor: Colors.white,
+                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const FavoritePage())),
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(color: const Color(0xFFF5F5F5), borderRadius: BorderRadius.circular(12)),
+                          child: Icon(isFavorite ? Icons.favorite : Icons.favorite_border, color: const Color(0xFFFF6B9D), size: 20),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
