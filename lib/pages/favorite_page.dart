@@ -7,9 +7,18 @@ import '../providers/favorite_provider.dart';
 import '../providers/cart_provider.dart';
 import '../utils/helpers.dart';
 import 'detail_page.dart';
+import 'main_navigation.dart';
 
 class FavoritePage extends StatelessWidget {
   const FavoritePage({super.key});
+
+  void _navigateToCart(BuildContext context) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const MainNavigation(initialIndex: 2)),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -174,6 +183,13 @@ class FavoritePage extends StatelessWidget {
                               SnackBar(
                                 content: Text('${bouquet.name} ditambahkan ke keranjang'),
                                 backgroundColor: const Color(0xFFFF6B9D),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                action: SnackBarAction(
+                                  label: 'Lihat',
+                                  textColor: Colors.white,
+                                  onPressed: () => _navigateToCart(context),
+                                ),
                               ),
                             );
                           },

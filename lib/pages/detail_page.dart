@@ -10,6 +10,7 @@ import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
 import '../utils/helpers.dart';
 import '../widgets/order_confirmation_dialog.dart';
+import 'main_navigation.dart';
 
 class DetailPage extends StatefulWidget {
   final Bouquet bouquet;
@@ -34,6 +35,14 @@ class _DetailPageState extends State<DetailPage> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _navigateToCart() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const MainNavigation(initialIndex: 2)),
+      (route) => false,
+    );
   }
 
   void _buyNow() {
@@ -250,7 +259,12 @@ class _DetailPageState extends State<DetailPage> {
                                         content: const Text('Added to cart!'), 
                                         backgroundColor: const Color(0xFFFF6B9D), 
                                         behavior: SnackBarBehavior.floating, 
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        action: SnackBarAction(
+                                          label: 'Lihat',
+                                          textColor: Colors.white,
+                                          onPressed: _navigateToCart,
+                                        ),
                                       ),
                                     );
                                   },

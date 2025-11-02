@@ -4,12 +4,12 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/bouquet_provider.dart';
-// ignore: unused_import
 import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
 import '../utils/helpers.dart';
 import 'favorite_page.dart';
 import 'detail_page.dart';
+import 'main_navigation.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -41,11 +41,20 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  void _navigateToCart() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const MainNavigation(initialIndex: 2)),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final allBouquets = Provider.of<BouquetProvider>(context).bouquets;
     final favoriteProvider = Provider.of<FavoriteProvider>(context);
+    final cartProvider = Provider.of<CartProvider>(context);
 
     String displayName = auth.user?.displayName ?? 'User';
     if (displayName == 'User' && auth.user?.email != null) {
@@ -234,7 +243,7 @@ class _HomePageState extends State<HomePage> {
                               (context, index) {
                                 final bouquet = filteredBouquets[index];
                                 final isFavorite = favoriteProvider.isFavorite(bouquet.id);
-                                return _buildProductCard(context, bouquet, isFavorite, favoriteProvider);
+                                return _buildProductCard(context, bouquet, isFavorite, favoriteProvider, cartProvider);
                               },
                               childCount: filteredBouquets.length,
                             ),
@@ -251,7 +260,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildProductCard(BuildContext context, Bouquet bouquet, bool isFavorite, FavoriteProvider favoriteProvider) {
+  Widget _buildProductCard(BuildContext context, Bouquet bouquet, bool isFavorite, FavoriteProvider favoriteProvider, CartProvider cartProvider) {
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => DetailPage(bouquet: bouquet))),
       child: Container(
@@ -324,10 +333,28 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(color: Color(0xFFFF6B9D), shape: BoxShape.circle),
-                          child: const Icon(Icons.add, color: Colors.white, size: 14),
+                        GestureDetector(
+                          onTap: () {
+                            cartProvider.addItem(bouquet, 1);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Added to cart!'),
+                                backgroundColor: const Color(0xFFFF6B9D),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                action: SnackBarAction(
+                                  label: 'Lihat',
+                                  textColor: Colors.white,
+                                  onPressed: _navigateToCart,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(color: Color(0xFFFF6B9D), shape: BoxShape.circle),
+                            child: const Icon(Icons.add, color: Colors.white, size: 14),
+                          ),
                         ),
                       ],
                     ),
