@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Toko Buket Teras Nenek',
+      title: 'Toko Bunga Cantik',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.pink, useMaterial3: true),
       home: Consumer3<AuthProvider, CartProvider, AddressProvider>(
