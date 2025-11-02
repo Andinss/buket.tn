@@ -9,6 +9,7 @@ import 'profile_page.dart';
 import 'seller_products_page.dart';
 import 'seller_orders_page.dart';
 import 'seller_analytics_page.dart';
+import 'seller_custom_orders_page.dart';
 
 class MainNavigation extends StatefulWidget {
   final int initialIndex;
@@ -43,6 +44,7 @@ class _MainNavigationState extends State<MainNavigation> {
     final List<Widget> sellerPages = [
       const SellerProductsPage(),
       const SellerOrdersPage(),
+      const SellerCustomOrdersPage(),
       const SellerAnalyticsPage(),
       const ProfilePage(),
     ];
@@ -73,6 +75,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 ? const [
                     BottomNavigationBarItem(icon: Icon(Icons.store_rounded, size: 28), label: ''),
                     BottomNavigationBarItem(icon: Icon(Icons.receipt_long_rounded, size: 28), label: ''),
+                    BottomNavigationBarItem(icon: Icon(Icons.auto_awesome, size: 28), label: ''),
                     BottomNavigationBarItem(icon: Icon(Icons.trending_up_rounded, size: 28), label: ''),
                     BottomNavigationBarItem(icon: Icon(Icons.person_rounded, size: 28), label: ''),
                   ]

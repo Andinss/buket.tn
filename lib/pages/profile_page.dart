@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 // ignore: unused_import
 import '../providers/address_provider.dart';
 import 'address_list_page.dart';
+import 'my_custom_orders_page.dart';
 import 'main_navigation.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -158,10 +159,18 @@ class ProfilePage extends StatelessWidget {
                     ),
                     const Divider(height: 1),
                     _buildMenuTile(
-                      icon: Icons.analytics_rounded,
+                      icon: Icons.auto_awesome,
+                      title: 'Pesanan Custom',
+                      subtitle: 'Kelola pesanan custom bouquet',
+                      onTap: () => _navigateToPage(context, 2),
+                      color: const Color(0xFFFF6B9D),
+                    ),
+                    const Divider(height: 1),
+                    _buildMenuTile(
+                      icon: Icons.trending_up_rounded,
                       title: 'Analytics & Laporan',
                       subtitle: 'Lihat statistik penjualan',
-                      onTap: () => _navigateToPage(context, 2),
+                      onTap: () => _navigateToPage(context, 3),
                       color: const Color(0xFFFF6B9D),
                     ),
                     const Divider(height: 1),
@@ -213,6 +222,17 @@ class ProfilePage extends StatelessWidget {
                       title: 'Metode Pembayaran',
                       subtitle: auth.paymentMethod.isEmpty ? 'Kelola metode pembayaran' : auth.paymentMethod,
                       onTap: () => _showPaymentDialog(context, auth),
+                      color: const Color(0xFFDB2777),
+                    ),
+                    const Divider(height: 1),
+                    _buildMenuTile(
+                      icon: Icons.auto_awesome,
+                      title: 'Pesanan Custom',
+                      subtitle: 'Lihat pesanan custom bouquet Anda',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MyCustomOrdersPage()),
+                      ),
                       color: const Color(0xFFDB2777),
                     ),
                   const Divider(height: 1),

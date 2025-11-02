@@ -1,3 +1,4 @@
+import 'package:buket_tn/models/custom_order.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'package:google_sign_in/google_sign_in.dart';
@@ -472,6 +473,65 @@ class FirebaseService {
     } catch (e) {
       debugPrint('Error counting addresses: $e');
       return 0;
+    }
+  }
+
+  Future<String> createCustomOrder(CustomOrder order) async {
+    try {
+      final docRef = await db.collection('custom_orders').add(order.toMap());
+      debugPrint('Custom order created: ${docRef.id}');
+      return docRef.id;
+    } catch (e) {
+      debugPrint('Error creating custom order: $e');
+      rethrow;
+    }
+  }
+
+  Stream<List<CustomOrder>> getBuyerCustomOrders(String uid) {
+    return db.collection('custom_orders')
+        .where('buyerId', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map((doc) => CustomOrder.fromDoc(doc)).toList())
+        .handleError((error) {
+          debugPrint('Error in getBuyerCustomOrders: $error');
+          return <CustomOrder>[];
+        });
+  }
+
+  Stream<List<CustomOrder>> getAllCustomOrders() {
+    return db.collection('custom_orders')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map((doc) => CustomOrder.fromDoc(doc)).toList())
+        .handleError((error) {
+          debugPrint('Error in getAllCustomOrders: $error');
+          return <CustomOrder>[];
+        });
+  }
+
+  Future<void> updateCustomOrderStatus(
+    String orderId,
+    String status, {
+    String? rejectionReason,
+    int? finalPrice,
+  }) async {
+    try {
+      final Map<String, dynamic> updateData = {'status': status};
+      
+      if (rejectionReason != null) {
+        updateData['rejectionReason'] = rejectionReason;
+      }
+      
+      if (finalPrice != null) {
+        updateData['finalPrice'] = finalPrice;
+      }
+      
+      await db.collection('custom_orders').doc(orderId).update(updateData);
+      debugPrint('Custom order status updated: $orderId -> $status');
+    } catch (e) {
+      debugPrint('Error updating custom order status: $e');
+      rethrow;
     }
   }
 }
