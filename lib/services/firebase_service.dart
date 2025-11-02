@@ -237,4 +237,95 @@ class FirebaseService {
   Future<void> updateOrderStatus(String orderId, String status) async {
     await db.collection('orders').doc(orderId).set({'status': status}, SetOptions(merge: true));
   }
+
+  Future<void> addToCart(String uid, CartItem cartItem) async {
+    try {
+      final cartRef = db.collection('users').doc(uid).collection('cart').doc(cartItem.bouquet.id);
+      await cartRef.set(cartItem.toMap());
+      debugPrint('Item added to cart: ${cartItem.bouquet.name}');
+    } catch (e) {
+      debugPrint('Error adding to cart: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateCartItemQuantity(String uid, String bouquetId, int quantity) async {
+    try {
+      final cartRef = db.collection('users').doc(uid).collection('cart').doc(bouquetId);
+      
+      if (quantity <= 0) {
+        await cartRef.delete();
+        debugPrint('Item removed from cart: $bouquetId');
+      } else {
+        await cartRef.update({'quantity': quantity});
+        debugPrint('Cart item quantity updated: $bouquetId = $quantity');
+      }
+    } catch (e) {
+      debugPrint('Error updating cart item: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> removeFromCart(String uid, String bouquetId) async {
+    try {
+      await db.collection('users').doc(uid).collection('cart').doc(bouquetId).delete();
+      debugPrint('Item removed from cart: $bouquetId');
+    } catch (e) {
+      debugPrint('Error removing from cart: $e');
+      rethrow;
+    }
+  }
+
+  Stream<List<CartItem>> getCartItems(String uid) {
+    return db.collection('users').doc(uid).collection('cart')
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            try {
+              return CartItem.fromMap(doc.data(), doc.id);
+            } catch (e) {
+              debugPrint('Error parsing cart item ${doc.id}: $e');
+              return null;
+            }
+          }).whereType<CartItem>().toList();
+        })
+        .handleError((error) {
+          debugPrint('Error getting cart items: $error');
+          return <CartItem>[];
+        });
+  }
+
+  Future<void> clearCart(String uid) async {
+    try {
+      final cartSnapshot = await db.collection('users').doc(uid).collection('cart').get();
+      final batch = db.batch();
+      
+      for (var doc in cartSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      
+      await batch.commit();
+      debugPrint('Cart cleared for user: $uid');
+    } catch (e) {
+      debugPrint('Error clearing cart: $e');
+      rethrow;
+    }
+  }
+
+  Future<int> getCartItemCount(String uid) async {
+    try {
+      final snapshot = await db.collection('users').doc(uid).collection('cart').get();
+      int totalCount = 0;
+      
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        totalCount += (data['quantity'] as int? ?? 1);
+      }
+      
+      return totalCount;
+    } catch (e) {
+      debugPrint('Error getting cart count: $e');
+      return 0;
+    }
+  }
 }

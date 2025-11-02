@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'bouquet.dart';
 
 class CartItem {
@@ -10,4 +11,33 @@ class CartItem {
   });
 
   int get price => bouquet.price;
+
+  // Convert CartItem to Map for Firebase
+  Map<String, dynamic> toMap() {
+    return {
+      'bouquetId': bouquet.id,
+      'bouquetData': bouquet.toMap(),
+      'quantity': quantity,
+      'addedAt': FieldValue.serverTimestamp(),
+    };
+  }
+
+  // Create CartItem from Firebase document
+  factory CartItem.fromMap(Map<String, dynamic> map, String bouquetId) {
+    final bouquetData = map['bouquetData'] as Map<String, dynamic>;
+    
+    return CartItem(
+      bouquet: Bouquet(
+        id: bouquetId,
+        name: bouquetData['name'] ?? '',
+        description: bouquetData['description'] ?? '',
+        price: bouquetData['price'] ?? 0,
+        images: List<String>.from(bouquetData['images'] ?? []),
+        category: bouquetData['category'] ?? '',
+        details: bouquetData['details'] ?? '',
+        sellerId: bouquetData['sellerId'] ?? '',
+      ),
+      quantity: map['quantity'] ?? 1,
+    );
+  }
 }

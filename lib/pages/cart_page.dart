@@ -45,15 +45,15 @@ class _CartPageState extends State<CartPage> {
             await service.placeOrder(auth.user!.uid, items, total.toDouble());
             
             for (var item in items) {
-              cart.removeItem(item.bouquet.id);
+              await cart.removeItem(item.bouquet.id);
             }
             
             Navigator.popUntil(context, (route) => route.isFirst);
             
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Pesanan berhasil dibuat!'),
-                backgroundColor: const Color(0xFFFF6B9D),
+              const SnackBar(
+                content: Text('Pesanan berhasil dibuat!'),
+                backgroundColor: Color(0xFFFF6B9D),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -72,7 +72,6 @@ class _CartPageState extends State<CartPage> {
   }
 
   void _navigateToHome() {
-    // Navigate to home page using Navigator
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const MainNavigation()),
@@ -85,6 +84,24 @@ class _CartPageState extends State<CartPage> {
     final cart = Provider.of<CartProvider>(context);
     // ignore: unused_local_variable
     final auth = Provider.of<AuthProvider>(context);
+
+    if (cart.isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFFAFAFA),
+        body: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(color: Color(0xFFFF6B9D)),
+                SizedBox(height: 16),
+                Text('Memuat keranjang...', style: TextStyle(fontSize: 14, color: Colors.grey)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     if (selectedItems.isEmpty && cart.items.isNotEmpty) {
       for (var item in cart.items) {
@@ -247,7 +264,7 @@ class _CartPageState extends State<CartPage> {
                               Column(
                                 children: [
                                   GestureDetector(
-                                    onTap: () => setState(() => cart.removeItem(item.bouquet.id)),
+                                    onTap: () => cart.removeItem(item.bouquet.id),
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(color: const Color(0xFFFFF0F5), borderRadius: BorderRadius.circular(8)),
@@ -261,12 +278,12 @@ class _CartPageState extends State<CartPage> {
                                     child: Row(
                                       children: [
                                         GestureDetector(
-                                          onTap: () => setState(() => cart.updateQuantity(item.bouquet.id, item.quantity - 1)),
+                                          onTap: () => cart.updateQuantity(item.bouquet.id, item.quantity - 1),
                                           child: const Icon(Icons.remove, size: 14, color: Color(0xFFFF6B9D)),
                                         ),
                                         Container(width: 20, alignment: Alignment.center, child: Text('${item.quantity}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
                                         GestureDetector(
-                                          onTap: () => setState(() => cart.updateQuantity(item.bouquet.id, item.quantity + 1)),
+                                          onTap: () => cart.updateQuantity(item.bouquet.id, item.quantity + 1),
                                           child: const Icon(Icons.add, size: 14, color: Color(0xFFFF6B9D)),
                                         ),
                                       ],
@@ -322,7 +339,7 @@ class _CartPageState extends State<CartPage> {
                               elevation: 0,
                             ),
                             child: Text(
-                              selectedCount == 0 ? 'Pilih Produk Terlebih Dahulu' : 'Checkout (${selectedCount})',
+                              selectedCount == 0 ? 'Pilih Produk Terlebih Dahulu' : 'Checkout ($selectedCount)',
                               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
                           ),
