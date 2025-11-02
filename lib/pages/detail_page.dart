@@ -86,9 +86,9 @@ class _DetailPageState extends State<DetailPage> {
             Navigator.popUntil(context, (route) => route.isFirst);
             
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Pesanan berhasil dibuat!'),
-                backgroundColor: const Color(0xFFFF6B9D),
+              const SnackBar(
+                content: Text('Pesanan berhasil dibuat!'),
+                backgroundColor: Color(0xFFFF6B9D),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -182,7 +182,11 @@ class _DetailPageState extends State<DetailPage> {
                         Container(
                           margin: const EdgeInsets.symmetric(horizontal: 20),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [Color(0xFFFFE8F0), Color(0xFFFFF0F5)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFE8F0), Color(0xFFFFF0F5)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             borderRadius: BorderRadius.circular(30),
                           ),
                           height: 400,
@@ -198,6 +202,71 @@ class _DetailPageState extends State<DetailPage> {
                             },
                           ),
                         ),
+                        if (widget.bouquet.images.length > 1)
+                          Positioned(
+                            top: 20,
+                            right: 35,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.6),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${currentImageIndex + 1}/${widget.bouquet.images.length}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          top: 20,
+                          left: 35,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: widget.bouquet.estimationDays == 0 
+                                  ? const Color(0xFFDCFCE7) 
+                                  : const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  widget.bouquet.estimationDays == 0 
+                                      ? Icons.check_circle 
+                                      : Icons.schedule,
+                                  size: 14,
+                                  color: widget.bouquet.estimationDays == 0 
+                                      ? const Color(0xFF16A34A) 
+                                      : const Color(0xFFC78500),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  widget.bouquet.estimationText,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: widget.bouquet.estimationDays == 0 
+                                        ? const Color(0xFF16A34A) 
+                                        : const Color(0xFFC78500),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                         Positioned(
                           bottom: 20,
                           left: 0,
@@ -210,7 +279,10 @@ class _DetailPageState extends State<DetailPage> {
                                 margin: const EdgeInsets.symmetric(horizontal: 4),
                                 width: currentImageIndex == index ? 24 : 8,
                                 height: 8,
-                                decoration: BoxDecoration(color: currentImageIndex == index ? const Color(0xFFFF6B9D) : Colors.white, borderRadius: BorderRadius.circular(4)),
+                                decoration: BoxDecoration(
+                                  color: currentImageIndex == index ? const Color(0xFFFF6B9D) : Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
                               ),
                             ),
                           ),
@@ -234,6 +306,41 @@ class _DetailPageState extends State<DetailPage> {
                                     Text(widget.bouquet.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
                                     const SizedBox(height: 4),
                                     Text(widget.bouquet.category, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: widget.bouquet.estimationDays == 0 
+                                            ? const Color(0xFFDCFCE7) 
+                                            : const Color(0xFFFEF3C7),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            widget.bouquet.estimationDays == 0 
+                                                ? Icons.check_circle 
+                                                : Icons.schedule,
+                                            size: 14,
+                                            color: widget.bouquet.estimationDays == 0 
+                                                ? const Color(0xFF16A34A) 
+                                                : const Color(0xFFC78500),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            widget.bouquet.estimationText,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: widget.bouquet.estimationDays == 0 
+                                                  ? const Color(0xFF16A34A) 
+                                                  : const Color(0xFFC78500),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),

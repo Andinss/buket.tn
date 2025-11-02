@@ -373,6 +373,34 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
+                
+                if (bouquet.estimationDays > 0)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.schedule, size: 10, color: Color(0xFFC78500)),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${bouquet.estimationDays}h',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFC78500),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
             Expanded(

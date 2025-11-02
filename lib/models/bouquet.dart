@@ -9,6 +9,7 @@ class Bouquet {
   final String category;
   final String details;
   final String sellerId;
+  final int estimationDays; 
 
   Bouquet({
     required this.id,
@@ -19,6 +20,7 @@ class Bouquet {
     required this.category,
     required this.details,
     required this.sellerId,
+    this.estimationDays = 1,
   });
 
   factory Bouquet.fromDoc(DocumentSnapshot doc) {
@@ -32,6 +34,7 @@ class Bouquet {
       category: d['category'] ?? '',
       details: d['details'] ?? '',
       sellerId: d['sellerId'] ?? '',
+      estimationDays: d['estimationDays'] ?? 1,
     );
   }
 
@@ -43,5 +46,16 @@ class Bouquet {
     'category': category,
     'details': details,
     'sellerId': sellerId,
+    'estimationDays': estimationDays,
   };
+  
+  String get estimationText {
+    if (estimationDays == 0) {
+      return 'Ready Stock';
+    } else if (estimationDays == 1) {
+      return 'Pre-order 1 Hari';
+    } else {
+      return 'Pre-order $estimationDays Hari';
+    }
+  }
 }

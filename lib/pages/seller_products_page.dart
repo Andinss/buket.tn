@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'dart:convert';
 
 import '../providers/auth_provider.dart';
@@ -111,7 +112,31 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
                             const SizedBox(height: 4),
                             Text(formatRupiah(product.price), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D))),
                             const SizedBox(height: 4),
-                            Text(product.category, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                              Row(
+                                children: [
+                                  Text(product.category, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: product.estimationDays == 0 
+                                          ? const Color(0xFFDCFCE7) 
+                                          : const Color(0xFFFEF3C7),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      product.estimationText,
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        color: product.estimationDays == 0 
+                                            ? const Color(0xFF16A34A) 
+                                            : const Color(0xFFC78500),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                           ],
                         ),
                       ),
@@ -150,7 +175,8 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
     final priceController = TextEditingController();
     final categoryController = TextEditingController();
     final detailsController = TextEditingController();
-    XFile? selectedImage;
+    final estimationController = TextEditingController(text: '1');
+    List<XFile> selectedImages = [];
 
     showDialog(
       context: context,
@@ -162,34 +188,84 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                GestureDetector(
-                  onTap: () async {
-                    final ImagePicker picker = ImagePicker();
-                    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                    setState(() => selectedImage = image);
-                  },
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFE8F0),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFF6B9D), width: 2, style: BorderStyle.solid),
-                    ),
-                    child: selectedImage == null
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.add_photo_alternate, size: 40, color: Color(0xFFFF6B9D)),
-                              SizedBox(height: 8),
-                              Text('Pilih Gambar', style: TextStyle(fontSize: 12, color: Color(0xFFFF6B9D))),
-                            ],
-                          )
-                        : ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.file(File(selectedImage!.path), fit: BoxFit.cover),
+                const Text('Gambar Produk (Maks. 3)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ...selectedImages.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final image = entry.value;
+                      return Stack(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFFF6B9D), width: 2),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.file(File(image.path), fit: BoxFit.cover),
+                            ),
                           ),
-                  ),
+                          Positioned(
+                            top: -8,
+                            right: -8,
+                            child: IconButton(
+                              icon: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.close, size: 12, color: Colors.white),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  selectedImages.removeAt(index);
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                    if (selectedImages.length < 3)
+                      GestureDetector(
+                        onTap: () async {
+                          final ImagePicker picker = ImagePicker();
+                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                          if (image != null) {
+                            setState(() {
+                              selectedImages.add(image);
+                            });
+                          }
+                        },
+                        child: DottedBorder(
+                          color: const Color(0xFFFF6B9D),
+                          strokeWidth: 2,
+                          dashPattern: [6, 3],
+                          borderType: BorderType.RRect,
+                          radius: const Radius.circular(12),
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            color: const Color(0xFFFFE8F0),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_photo_alternate, size: 24, color: Color(0xFFFF6B9D)),
+                                SizedBox(height: 4),
+                                Text('Tambah', style: TextStyle(fontSize: 10, color: Color(0xFFFF6B9D))),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -231,6 +307,17 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  controller: estimationController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Estimasi Pembuatan (Hari)',
+                    hintText: '0 = Ready Stock, 1+ = Pre-order',
+                    prefixIcon: const Icon(Icons.schedule, color: Color(0xFFFF6B9D)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
                   controller: detailsController,
                   maxLines: 3,
                   decoration: InputDecoration(
@@ -256,26 +343,30 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
                   return;
                 }
 
-                if (selectedImage == null) {
+                if (selectedImages.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Pilih gambar terlebih dahulu'), backgroundColor: Colors.red),
+                    const SnackBar(content: Text('Pilih minimal 1 gambar'), backgroundColor: Colors.red),
                   );
                   return;
                 }
 
                 try {
-                  final bytes = await selectedImage!.readAsBytes();
-                  final imageBase64 = base64Encode(bytes);
+                  List<String> imageBase64List = [];
+                  for (var image in selectedImages) {
+                    final bytes = await image.readAsBytes();
+                    imageBase64List.add(base64Encode(bytes));
+                  }
 
                   final newBouquet = Bouquet(
                     id: '',
                     name: nameController.text,
                     description: descriptionController.text,
                     price: int.parse(priceController.text),
-                    images: [imageBase64],
+                    images: imageBase64List,
                     category: categoryController.text.isNotEmpty ? categoryController.text : 'Bunga',
                     details: detailsController.text,
                     sellerId: sellerId,
+                    estimationDays: int.tryParse(estimationController.text) ?? 1,
                   );
 
                   final service = FirebaseService();
@@ -306,7 +397,9 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
     final priceController = TextEditingController(text: product.price.toString());
     final categoryController = TextEditingController(text: product.category);
     final detailsController = TextEditingController(text: product.details);
-    XFile? selectedImage;
+    final estimationController = TextEditingController(text: product.estimationDays.toString());
+    List<XFile> newImages = [];
+    List<String> existingImages = List.from(product.images);
 
     showDialog(
       context: context,
@@ -318,39 +411,124 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                GestureDetector(
-                  onTap: () async {
-                    final ImagePicker picker = ImagePicker();
-                    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                    setState(() => selectedImage = image);
-                  },
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFE8F0),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFF6B9D), width: 2),
-                    ),
-                    child: selectedImage == null
-                        ? product.images.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: buildProductImage(product.images[0]),
-                              )
-                            : Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(Icons.add_photo_alternate, size: 40, color: Color(0xFFFF6B9D)),
-                                  SizedBox(height: 8),
-                                  Text('Ubah Gambar', style: TextStyle(fontSize: 12, color: Color(0xFFFF6B9D))),
-                                ],
-                              )
-                        : ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.file(File(selectedImage!.path), fit: BoxFit.cover),
+                const Text('Gambar Produk (Maks. 3)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ...existingImages.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final imageData = entry.value;
+                      return Stack(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFFF6B9D), width: 2),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: buildProductImage(imageData),
+                            ),
                           ),
-                  ),
+                          Positioned(
+                            top: -8,
+                            right: -8,
+                            child: IconButton(
+                              icon: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.close, size: 12, color: Colors.white),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  existingImages.removeAt(index);
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+
+                    ...newImages.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final image = entry.value;
+                      return Stack(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFFF6B9D), width: 2),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.file(File(image.path), fit: BoxFit.cover),
+                            ),
+                          ),
+                          Positioned(
+                            top: -8,
+                            right: -8,
+                            child: IconButton(
+                              icon: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.close, size: 12, color: Colors.white),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  newImages.removeAt(index);
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                    if (existingImages.length + newImages.length < 3)
+                      GestureDetector(
+                        onTap: () async {
+                          final ImagePicker picker = ImagePicker();
+                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                          if (image != null) {
+                            setState(() {
+                              newImages.add(image);
+                            });
+                          }
+                        },
+                        child: DottedBorder(
+                          color: const Color(0xFFFF6B9D),
+                          strokeWidth: 2,
+                          dashPattern: [6, 3], // panjang garis, jarak antar putus-putus
+                          borderType: BorderType.RRect,
+                          radius: const Radius.circular(12),
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            color: const Color(0xFFFFE8F0),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.add_photo_alternate, size: 24, color: Color(0xFFFF6B9D)),
+                                SizedBox(height: 4),
+                                Text('Tambah', style: TextStyle(fontSize: 10, color: Color(0xFFFF6B9D))),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -392,6 +570,17 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  controller: estimationController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Estimasi Pembuatan (Hari)',
+                    hintText: '0 = Ready Stock, 1+ = Pre-order',
+                    prefixIcon: const Icon(Icons.schedule, color: Color(0xFFFF6B9D)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
                   controller: detailsController,
                   maxLines: 3,
                   decoration: InputDecoration(
@@ -417,13 +606,19 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
                   return;
                 }
 
+                if (existingImages.isEmpty && newImages.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Minimal 1 gambar diperlukan'), backgroundColor: Colors.red),
+                  );
+                  return;
+                }
+                
                 try {
-                  List<String> images = product.images;
-
-                  if (selectedImage != null) {
-                    final bytes = await selectedImage!.readAsBytes();
-                    final imageBase64 = base64Encode(bytes);
-                    images = [imageBase64];
+                  List<String> allImages = List.from(existingImages);
+                  
+                  for (var image in newImages) {
+                    final bytes = await image.readAsBytes();
+                    allImages.add(base64Encode(bytes));
                   }
 
                   final updatedBouquet = Bouquet(
@@ -431,10 +626,11 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
                     name: nameController.text,
                     description: descriptionController.text,
                     price: int.parse(priceController.text),
-                    images: images,
+                    images: allImages,
                     category: categoryController.text.isNotEmpty ? categoryController.text : 'Bunga',
                     details: detailsController.text,
                     sellerId: product.sellerId,
+                    estimationDays: int.tryParse(estimationController.text) ?? 1,
                   );
 
                   final service = FirebaseService();
