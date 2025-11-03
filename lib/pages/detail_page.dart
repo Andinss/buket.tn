@@ -77,7 +77,12 @@ class _DetailPageState extends State<DetailPage> {
           
           final service = FirebaseService();
           try {
-            await service.placeOrder(auth.user!.uid, items, total.toDouble());
+            await service.placeOrder(
+              auth.user!.uid, 
+              items, 
+              total.toDouble(),
+              paymentMethod  
+            );
             
             for (var item in items) {
               cart.removeItem(item.bouquet.id);

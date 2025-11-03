@@ -6,6 +6,7 @@ import '../services/firebase_service.dart';
 import '../models/order.dart';
 import '../utils/helpers.dart';
 import 'main_navigation.dart';
+import 'order_chat_page.dart';
 
 class ActivityPage extends StatefulWidget {
   const ActivityPage({super.key});
@@ -303,6 +304,7 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
     final statusColor = getStatusColor(order.status);
     final statusTextColor = getStatusTextColor(order.status);
     final statusLabel = getStatusLabel(order.status);
+    final auth = Provider.of<AuthProvider>(context, listen: false);
 
     showDialog(
       context: context,
@@ -311,7 +313,7 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
         insetPadding: const EdgeInsets.all(20),
         child: Container(
           width: double.infinity,
-          constraints: const BoxConstraints(maxHeight: 600),
+          constraints: const BoxConstraints(maxHeight: 700),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -328,15 +330,16 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
                   children: [
                     const Icon(Icons.receipt_long, color: Color(0xFFFF6B9D), size: 24),
                     const SizedBox(width: 12),
-                    const Text(
-                      'Detail Pesanan',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2D3142),
+                    const Expanded(
+                      child: Text(
+                        'Detail Pesanan',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2D3142),
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -365,6 +368,57 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
                           _buildDetailRow('Tanggal', '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year}'),
                           _buildDetailRow('Waktu', '${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')}'),
                           _buildDetailRow('Status', statusLabel),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Payment Information Section
+                      _buildDetailSection(
+                        title: 'Informasi Pembayaran',
+                        children: [
+                          _buildDetailRow('Metode Pembayaran', order.paymentMethod),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Status Pembayaran',
+                                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: order.isPaid 
+                                      ? const Color(0xFFDCFCE7) 
+                                      : const Color(0xFFFEE2E2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      order.isPaid ? Icons.check_circle : Icons.pending,
+                                      size: 14,
+                                      color: order.isPaid 
+                                          ? const Color(0xFF16A34A) 
+                                          : const Color(0xFFDC2626),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      order.isPaid ? 'Sudah Dibayar' : 'Belum Dibayar',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: order.isPaid 
+                                            ? const Color(0xFF16A34A) 
+                                            : const Color(0xFFDC2626),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                       
@@ -435,6 +489,35 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
                       ),
                       
                       const SizedBox(height: 20),
+                      
+                      // Chat Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OrderChatPage(order: order),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                          label: Text(
+                            auth.role == 'seller' ? 'Chat dengan Pembeli' : 'Chat dengan Penjual',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFFFF6B9D),
+                            side: const BorderSide(color: Color(0xFFFF6B9D), width: 2),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

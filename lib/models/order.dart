@@ -7,6 +7,9 @@ class Order {
   final double total;
   final String status;
   final DateTime createdAt;
+  final String paymentMethod;
+  final bool isPaid;
+  final String? paymentProofUrl;
 
   Order({
     required this.id,
@@ -15,6 +18,9 @@ class Order {
     required this.total,
     required this.status,
     required this.createdAt,
+    this.paymentMethod = 'Transfer Bank',
+    this.isPaid = false,
+    this.paymentProofUrl,
   });
 
   factory Order.fromDoc(DocumentSnapshot doc) {
@@ -72,6 +78,9 @@ class Order {
         total: totalValue,
         status: d['status']?.toString() ?? 'placed',
         createdAt: createdAtValue,
+        paymentMethod: d['paymentMethod']?.toString() ?? 'Transfer Bank',
+        isPaid: d['isPaid'] ?? false,
+        paymentProofUrl: d['paymentProofUrl']?.toString(),
       );
     } catch (e) {
       return Order(
@@ -81,6 +90,8 @@ class Order {
         total: 0,
         status: 'placed',
         createdAt: DateTime.now(),
+        paymentMethod: 'Transfer Bank',
+        isPaid: false,
       );
     }
   }

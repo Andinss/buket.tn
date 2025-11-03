@@ -8,6 +8,7 @@ import '../models/bouquet.dart';
 import '../models/cart_item.dart';
 import '../models/order.dart';
 import '../models/address.dart';
+import '../models/chat_message.dart';
 
 class FirebaseService {
   final FirebaseAuth auth = FirebaseAuth.instance;
@@ -169,7 +170,7 @@ class FirebaseService {
     await batch.commit();
   }
 
-  Future<void> placeOrder(String uid, List<CartItem> items, double total) async {
+  Future<void> placeOrder(String uid, List<CartItem> items, double total, String paymentMethod) async {
     try {
       final doc = db.collection('orders').doc();
       await doc.set({
@@ -183,6 +184,8 @@ class FirebaseService {
         'total': total,
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'placed',
+        'paymentMethod': paymentMethod,
+        'isPaid': paymentMethod == 'Bayar di Tempat (COD)' ? false : false, 
       });
       debugPrint('Order placed successfully with ID: ${doc.id}');
     } catch (e) {
@@ -534,4 +537,93 @@ class FirebaseService {
       rethrow;
     }
   }
+
+  // Chat related methods
+    Future<void> sendChatMessage(ChatMessage message) async {
+      try {
+        final chatRef = db.collection('chats').doc(message.orderId).collection('messages');
+        await chatRef.add(message.toMap());
+        debugPrint('Message sent to order: ${message.orderId}');
+      } catch (e) {
+        debugPrint('Error sending message: $e');
+        rethrow;
+      }
+    }
+
+    Stream<List<ChatMessage>> getChatMessages(String orderId) {
+      return db.collection('chats')
+          .doc(orderId)
+          .collection('messages')
+          .orderBy('timestamp', descending: false)
+          .snapshots()
+          .map((snapshot) {
+            return snapshot.docs.map((doc) {
+              try {
+                return ChatMessage.fromDoc(doc);
+              } catch (e) {
+                debugPrint('Error parsing chat message ${doc.id}: $e');
+                return null;
+              }
+            }).whereType<ChatMessage>().toList();
+          })
+          .handleError((error) {
+            debugPrint('Error getting chat messages: $error');
+            return <ChatMessage>[];
+          });
+    }
+
+    Future<void> markMessagesAsRead(String orderId, String userId) async {
+      try {
+        final messagesSnapshot = await db.collection('chats')
+            .doc(orderId)
+            .collection('messages')
+            .where('senderId', isNotEqualTo: userId)
+            .where('isRead', isEqualTo: false)
+            .get();
+        
+        final batch = db.batch();
+        for (var doc in messagesSnapshot.docs) {
+          batch.update(doc.reference, {'isRead': true});
+        }
+        
+        await batch.commit();
+        debugPrint('Messages marked as read for order: $orderId');
+      } catch (e) {
+        debugPrint('Error marking messages as read: $e');
+      }
+    }
+
+    Future<int> getUnreadMessageCount(String orderId, String userId) async {
+      try {
+        final snapshot = await db.collection('chats')
+            .doc(orderId)
+            .collection('messages')
+            .where('senderId', isNotEqualTo: userId)
+            .where('isRead', isEqualTo: false)
+            .get();
+        
+        return snapshot.docs.length;
+      } catch (e) {
+        debugPrint('Error getting unread count: $e');
+        return 0;
+      }
+    }
+
+    // Payment related methods
+    Future<void> updatePaymentStatus(String orderId, bool isPaid, {String? proofUrl}) async {
+      try {
+        final Map<String, dynamic> updateData = {'isPaid': isPaid};
+        
+        if (proofUrl != null) {
+          updateData['paymentProofUrl'] = proofUrl;
+          updateData['paidAt'] = FieldValue.serverTimestamp();
+        }
+        
+        await db.collection('orders').doc(orderId).update(updateData);
+        debugPrint('Payment status updated: $orderId -> isPaid: $isPaid');
+      } catch (e) {
+        debugPrint('Error updating payment status: $e');
+        rethrow;
+      }
+    }
 }
