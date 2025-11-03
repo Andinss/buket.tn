@@ -531,6 +531,16 @@ class FirebaseService {
       }
       
       await db.collection('custom_orders').doc(orderId).update(updateData);
+      
+      // Jika diterima, convert ke regular order
+      if (status == 'accepted' && finalPrice != null) {
+        final customOrderDoc = await db.collection('custom_orders').doc(orderId).get();
+        if (customOrderDoc.exists) {
+          final customOrder = CustomOrder.fromDoc(customOrderDoc);
+          await convertCustomOrderToOrder(orderId, customOrder, finalPrice);
+        }
+      }
+      
       debugPrint('Custom order status updated: $orderId -> $status');
     } catch (e) {
       debugPrint('Error updating custom order status: $e');
@@ -609,6 +619,69 @@ class FirebaseService {
       }
     }
 
+    // Get all chat conversations for seller
+    Stream<List<Map<String, dynamic>>> getSellerChatConversations() {
+      return db.collection('chats')
+          .snapshots()
+          .asyncMap((snapshot) async {
+            List<Map<String, dynamic>> conversations = [];
+            
+            for (var chatDoc in snapshot.docs) {
+              final orderId = chatDoc.id;
+              
+              // Get order details
+              final orderDoc = await db.collection('orders').doc(orderId).get();
+              if (!orderDoc.exists) continue;
+              
+              final order = Order.fromDoc(orderDoc);
+              
+              // Get last message
+              final messagesSnapshot = await db.collection('chats')
+                  .doc(orderId)
+                  .collection('messages')
+                  .orderBy('timestamp', descending: true)
+                  .limit(1)
+                  .get();
+              
+              ChatMessage? lastMessage;
+              if (messagesSnapshot.docs.isNotEmpty) {
+                lastMessage = ChatMessage.fromDoc(messagesSnapshot.docs.first);
+              }
+              
+              // Get unread count (messages from buyer)
+              final unreadSnapshot = await db.collection('chats')
+                  .doc(orderId)
+                  .collection('messages')
+                  .where('senderId', isEqualTo: order.buyerId)
+                  .where('isRead', isEqualTo: false)
+                  .get();
+              
+              // Get buyer info
+              final buyerDoc = await db.collection('users').doc(order.buyerId).get();
+              final buyerName = buyerDoc.exists 
+                  ? (buyerDoc.data()?['displayName'] ?? 'Unknown') 
+                  : 'Unknown';
+              
+              conversations.add({
+                'orderId': orderId,
+                'order': order,
+                'buyerName': buyerName,
+                'lastMessage': lastMessage,
+                'unreadCount': unreadSnapshot.docs.length,
+              });
+            }
+            
+            // Sort by last message timestamp
+            conversations.sort((a, b) {
+              final aTime = a['lastMessage']?.timestamp ?? DateTime(2000);
+              final bTime = b['lastMessage']?.timestamp ?? DateTime(2000);
+              return bTime.compareTo(aTime);
+            });
+            
+            return conversations;
+          });
+    }
+
     // Payment related methods
     Future<void> updatePaymentStatus(String orderId, bool isPaid, {String? proofUrl}) async {
       try {
@@ -623,6 +696,38 @@ class FirebaseService {
         debugPrint('Payment status updated: $orderId -> isPaid: $isPaid');
       } catch (e) {
         debugPrint('Error updating payment status: $e');
+        rethrow;
+      }
+    }
+
+    Future<String> convertCustomOrderToOrder(String customOrderId, CustomOrder customOrder, int finalPrice) async {
+      try {
+        final orderRef = db.collection('orders').doc();
+        
+        await orderRef.set({
+          'buyerId': customOrder.buyerId,
+          'items': [
+            {
+              'bouquetId': 'custom',
+              'name': 'Custom Bouquet - ${customOrder.occasion}',
+              'price': finalPrice,
+              'qty': 1,
+              'details': '${customOrder.flowerType}, ${customOrder.colorPreference}',
+            }
+          ],
+          'total': finalPrice.toDouble(),
+          'createdAt': FieldValue.serverTimestamp(),
+          'status': 'placed',
+          'paymentMethod': 'Transfer Bank',
+          'isPaid': false,
+          'isCustomOrder': true,
+          'customOrderId': customOrderId,
+        });
+        
+        debugPrint('Custom order converted to regular order: ${orderRef.id}');
+        return orderRef.id;
+      } catch (e) {
+        debugPrint('Error converting custom order: $e');
         rethrow;
       }
     }

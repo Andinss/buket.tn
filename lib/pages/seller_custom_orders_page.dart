@@ -520,7 +520,7 @@ class _SellerCustomOrdersPageState extends State<SellerCustomOrdersPage>
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Terima Pesanan'),
+        title: const Text('Terima Pesanan Custom'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -543,6 +543,29 @@ class _SellerCustomOrdersPageState extends State<SellerCustomOrdersPage>
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Pesanan akan masuk ke daftar pesanan utama',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.blue.shade700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -576,11 +599,13 @@ class _SellerCustomOrdersPageState extends State<SellerCustomOrdersPage>
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Pesanan berhasil diterima!'),
+                    content: Text('Pesanan berhasil diterima dan ditambahkan ke daftar pesanan!'),
                     backgroundColor: Color(0xFF10B981),
+                    duration: Duration(seconds: 3),
                   ),
                 );
               } catch (e) {
+                Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Error: $e'),
@@ -592,7 +617,7 @@ class _SellerCustomOrdersPageState extends State<SellerCustomOrdersPage>
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF10B981),
             ),
-            child: const Text('Terima', style: TextStyle(color: Colors.white)),
+            child: const Text('Terima & Buat Pesanan', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

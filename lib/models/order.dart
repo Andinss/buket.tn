@@ -10,6 +10,8 @@ class Order {
   final String paymentMethod;
   final bool isPaid;
   final String? paymentProofUrl;
+  final bool isCustomOrder; 
+  final String? customOrderId; 
 
   Order({
     required this.id,
@@ -21,6 +23,8 @@ class Order {
     this.paymentMethod = 'Transfer Bank',
     this.isPaid = false,
     this.paymentProofUrl,
+    this.isCustomOrder = false,
+    this.customOrderId,
   });
 
   factory Order.fromDoc(DocumentSnapshot doc) {
@@ -81,6 +85,8 @@ class Order {
         paymentMethod: d['paymentMethod']?.toString() ?? 'Transfer Bank',
         isPaid: d['isPaid'] ?? false,
         paymentProofUrl: d['paymentProofUrl']?.toString(),
+        isCustomOrder: d['isCustomOrder'] ?? false,
+        customOrderId: d['customOrderId']?.toString(),
       );
     } catch (e) {
       return Order(
@@ -92,6 +98,7 @@ class Order {
         createdAt: DateTime.now(),
         paymentMethod: 'Transfer Bank',
         isPaid: false,
+        isCustomOrder: false,
       );
     }
   }

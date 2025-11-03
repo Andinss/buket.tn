@@ -185,6 +185,9 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> with SingleTickerPr
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
+          border: order.isCustomOrder 
+              ? Border.all(color: const Color(0xFF6366F1), width: 2)
+              : null,
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
         ),
         child: Column(
@@ -197,7 +200,39 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> with SingleTickerPr
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Order #${order.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
+                      Row(
+                        children: [
+                          Text('Order #${order.id.substring(0, 8).toUpperCase()}', 
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
+                          if (order.isCustomOrder) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.auto_awesome, size: 12, color: Colors.white),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'CUSTOM',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year} ${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')}',
@@ -226,7 +261,12 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> with SingleTickerPr
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: order.isCustomOrder 
+                    ? const Color(0xFFF0F0FF)
+                    : Colors.grey.shade50, 
+                borderRadius: BorderRadius.circular(12)
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -245,9 +285,22 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> with SingleTickerPr
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
-                            child: Text('$itemName × $quantity', style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+                            child: Row(
+                              children: [
+                                if (order.isCustomOrder)
+                                  const Padding(
+                                    padding: EdgeInsets.only(right: 6),
+                                    child: Icon(Icons.auto_awesome, size: 14, color: Color(0xFF6366F1)),
+                                  ),
+                                Expanded(
+                                  child: Text('$itemName × $quantity', 
+                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+                                ),
+                              ],
+                            ),
                           ),
-                          Text(formatRupiah(price * quantity), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                          Text(formatRupiah(price * quantity), 
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                         ],
                       ),
                     );
@@ -260,7 +313,8 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> with SingleTickerPr
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Total:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                Text(formatRupiah(order.total.toInt()), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D))),
+                Text(formatRupiah(order.total.toInt()), 
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D))),
               ],
             ),
           ],
