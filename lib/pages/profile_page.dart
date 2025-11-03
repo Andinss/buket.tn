@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../pages/seller_promo_page.dart';
 
 import '../providers/auth_provider.dart';
 // ignore: unused_import
@@ -171,6 +172,17 @@ class ProfilePage extends StatelessWidget {
                       title: 'Analytics & Laporan',
                       subtitle: 'Lihat statistik penjualan',
                       onTap: () => _navigateToPage(context, 3),
+                      color: const Color(0xFFFF6B9D),
+                    ),
+                    const Divider(height: 1),
+                    _buildMenuTile(
+                      icon: Icons.campaign_rounded,
+                      title: 'Kelola Promo',
+                      subtitle: 'Atur promo untuk halaman utama',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SellerPromoPage()),
+                      ),
                       color: const Color(0xFFFF6B9D),
                     ),
                     const Divider(height: 1),

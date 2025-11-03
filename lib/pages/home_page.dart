@@ -22,8 +22,40 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String selectedCategory = 'All';
   String searchQuery = '';
+  String selectedColor = 'Semua';
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final PageController _promoController = PageController();
+  int _currentPromoPage = 0;
+
+  final List<String> _colorFilters = [
+    'Semua',
+    'Merah',
+    'Pink',
+    'Putih',
+    'Kuning',
+    'Ungu',
+    'Biru',
+    'Orange',
+  ];
+
+  final List<Map<String, dynamic>> _promos = [
+    {
+      'title': 'Big Sale',
+      'subtitle': 'Get Up To 50% Off on\nall flowers this week!',
+      'colors': [Color(0xFFFF6B9D), Color(0xFFFF8FAB)],
+    },
+    {
+      'title': 'New Arrival',
+      'subtitle': 'Fresh flowers just arrived!\nCheck out our collection',
+      'colors': [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+    },
+    {
+      'title': 'Special Offer',
+      'subtitle': 'Buy 2 Get 1 Free\nLimited time only!',
+      'colors': [Color(0xFF10B981), Color(0xFF34D399)],
+    },
+  ];
 
   @override
   void initState() {
@@ -33,12 +65,34 @@ class _HomePageState extends State<HomePage> {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (mounted) setState(() {});
     });
+
+    // Auto slide promo
+    Future.delayed(const Duration(seconds: 3), () {
+      _autoSlidePromo();
+    });
+  }
+
+  void _autoSlidePromo() {
+    if (!mounted) return;
+    
+    Future.delayed(const Duration(seconds: 4), () {
+      if (_promoController.hasClients) {
+        int nextPage = (_currentPromoPage + 1) % _promos.length;
+        _promoController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+      _autoSlidePromo();
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _promoController.dispose();
     super.dispose();
   }
 
@@ -62,11 +116,19 @@ class _HomePageState extends State<HomePage> {
       displayName = auth.user!.email!.split('@').first;
     }
 
-    final filteredBouquets = allBouquets.where((b) =>
-      b.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-      b.description.toLowerCase().contains(searchQuery.toLowerCase()) ||
-      b.category.toLowerCase().contains(searchQuery.toLowerCase())
-    ).toList();
+    // Filter berdasarkan pencarian dan warna
+    final filteredBouquets = allBouquets.where((b) {
+      final matchesSearch = b.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          b.description.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          b.category.toLowerCase().contains(searchQuery.toLowerCase());
+      
+      final matchesColor = selectedColor == 'Semua' || 
+          b.name.toLowerCase().contains(selectedColor.toLowerCase()) ||
+          b.description.toLowerCase().contains(selectedColor.toLowerCase()) ||
+          b.details.toLowerCase().contains(selectedColor.toLowerCase());
+      
+      return matchesSearch && matchesColor;
+    }).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
@@ -137,7 +199,7 @@ class _HomePageState extends State<HomePage> {
                         focusNode: _searchFocusNode,
                         onChanged: (value) => setState(() => searchQuery = value),
                         decoration: const InputDecoration(
-                          hintText: 'Cari bunga...',
+                          hintText: 'Cari bunga atau warna...',
                           border: InputBorder.none,
                           hintStyle: TextStyle(color: Colors.grey),
                         ),
@@ -153,6 +215,57 @@ class _HomePageState extends State<HomePage> {
                         child: const Icon(Icons.close, color: Colors.grey, size: 20),
                       ),
                   ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Filter Warna
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _colorFilters.map((color) {
+                    final isSelected = selectedColor == color;
+                    return GestureDetector(
+                      onTap: () => setState(() => selectedColor = color),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFFFF6B9D) : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, 3))],
+                          border: isSelected ? null : Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (color != 'Semua')
+                              Container(
+                                width: 12,
+                                height: 12,
+                                margin: const EdgeInsets.only(right: 6),
+                                decoration: BoxDecoration(
+                                  color: _getColorFromName(color),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 1),
+                                ),
+                              ),
+                            Text(
+                              color,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isSelected ? Colors.white : Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
             ),
@@ -174,44 +287,110 @@ class _HomePageState extends State<HomePage> {
                     )
                   : CustomScrollView(
                       slivers: [
-                        if (searchQuery.isEmpty)
+                        // Promo Slider
+                        if (searchQuery.isEmpty && selectedColor == 'Semua')
                           SliverToBoxAdapter(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                              child: Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(colors: [Color(0xFFFF6B9D), Color(0xFFFF8FAB)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                                  borderRadius: BorderRadius.circular(25),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          const Text('Big Sale', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                                          const SizedBox(height: 4),
-                                          const Text('Get Up To 50% Off on\nall flowers this week!', style: TextStyle(fontSize: 12, color: Colors.white)),
-                                          const SizedBox(height: 12),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                                            child: const Text('Shop Now', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D))),
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    height: 150,
+                                    child: PageView.builder(
+                                      controller: _promoController,
+                                      onPageChanged: (index) {
+                                        setState(() => _currentPromoPage = index);
+                                      },
+                                      itemCount: _promos.length,
+                                      itemBuilder: (context, index) {
+                                        final promo = _promos[index];
+                                        return Container(
+                                          margin: const EdgeInsets.symmetric(horizontal: 5),
+                                          padding: const EdgeInsets.all(20),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: promo['colors'] as List<Color>,
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                            borderRadius: BorderRadius.circular(25),
                                           ),
-                                        ],
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      promo['title'] as String,
+                                                      style: const TextStyle(
+                                                        fontSize: 24,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      promo['subtitle'] as String,
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 12),
+                                                    Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius: BorderRadius.circular(20),
+                                                      ),
+                                                      child: Text(
+                                                        'Shop Now',
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: (promo['colors'] as List<Color>)[0],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                    
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                      _promos.length,
+                                      (index) => Container(
+                                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                                        width: _currentPromoPage == index ? 24 : 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color: _currentPromoPage == index
+                                              ? const Color(0xFFFF6B9D)
+                                              : Colors.grey.shade300,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         
-                        if (searchQuery.isEmpty)
+                        if (searchQuery.isEmpty && selectedColor == 'Semua')
                           const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                        if (searchQuery.isEmpty)
+                        if (searchQuery.isEmpty && selectedColor == 'Semua')
                           SliverToBoxAdapter(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -252,7 +431,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         
                         const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                        if (searchQuery.isEmpty)
+                        if (searchQuery.isEmpty && selectedColor == 'Semua')
                           SliverToBoxAdapter(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -332,6 +511,27 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  Color _getColorFromName(String colorName) {
+    switch (colorName.toLowerCase()) {
+      case 'merah':
+        return Colors.red;
+      case 'pink':
+        return Colors.pink;
+      case 'putih':
+        return Colors.white;
+      case 'kuning':
+        return Colors.yellow;
+      case 'ungu':
+        return Colors.purple;
+      case 'biru':
+        return Colors.blue;
+      case 'orange':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildProductCard(BuildContext context, Bouquet bouquet, bool isFavorite, FavoriteProvider favoriteProvider, CartProvider cartProvider) {
