@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/custom_order.dart';
-import '../models/order.dart';
 import '../utils/helpers.dart';
-import '../pages/order_chat_page.dart';
 import '../providers/auth_provider.dart';
+import '../services/firebase_service.dart';
+import '../pages/buyer_chat_page.dart'; 
 
 class CustomOrderDetailPage extends StatelessWidget {
   final CustomOrder order;
@@ -15,6 +15,7 @@ class CustomOrderDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final isSeller = auth.role == 'seller';
     
     Color statusColor;
     Color statusTextColor;
@@ -356,48 +357,135 @@ class CustomOrderDetailPage extends StatelessWidget {
                 ),
               ),
 
-            // TAMBAHAN: Tombol Chat dengan Admin
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    final dummyOrder = Order(
-                      id: auth.user!.uid, 
-                      buyerId: auth.user!.uid,
-                      items: [],
-                      total: order.budget.toDouble(),
-                      status: 'placed',
-                      createdAt: order.createdAt,
-                      isCustomOrder: true,
-                      customOrderId: order.id,
-                    );
-                    
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => OrderChatPage(order: dummyOrder),
+            const SizedBox(height: 12),
+
+            if (isSeller) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    if (order.status == 'pending') ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => _showRejectDialog(context, order),
+                              icon: const Icon(Icons.close, size: 18),
+                              label: const Text('Tolak'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.red,
+                                side: const BorderSide(color: Colors.red, width: 2),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _showAcceptDialog(context, order),
+                              icon: const Icon(Icons.check, size: 18),
+                              label: const Text('Terima'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF10B981),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.chat_bubble_outline, size: 20),
-                  label: const Text(
-                    'Chat dengan Admin',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6B9D),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    ] else if (order.status == 'accepted') ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _markAsCompleted(context, order),
+                          icon: const Icon(Icons.check_circle, size: 18),
+                          label: const Text('Tandai Selesai'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF5B21B6),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BuyerChatPage(
+                                buyerId: order.buyerId,
+                                buyerName: order.buyerName,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                        label: const Text('Chat dengan Pembeli'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFFF6B9D),
+                          side: const BorderSide(color: Color(0xFFFF6B9D), width: 2),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
                     ),
-                    elevation: 2,
+                  ],
+                ),
+              ),
+            ],
+
+            if (!isSeller) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BuyerChatPage(
+                            buyerId: auth.user!.uid,
+                            buyerName: auth.user!.displayName ?? 'User',
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                    label: const Text(
+                      'Chat dengan Admin',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6B9D),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
 
             const SizedBox(height: 30),
           ],
@@ -431,6 +519,213 @@ class CustomOrderDetailPage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showAcceptDialog(BuildContext context, CustomOrder order) {
+    final priceController = TextEditingController(text: order.budget.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Terima Pesanan Custom'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Masukkan harga final untuk pesanan ini:'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: priceController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Harga Final (Rp)',
+                prefixIcon: const Icon(Icons.money, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Budget pembeli: ${formatRupiah(order.budget)}',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final price = int.tryParse(priceController.text);
+              if (price == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Harga tidak valid'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              try {
+                final service = FirebaseService();
+                await service.updateCustomOrderStatus(
+                  order.id,
+                  'accepted',
+                  finalPrice: price,
+                );
+
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Pesanan berhasil diterima!'),
+                    backgroundColor: Color(0xFF10B981),
+                  ),
+                );
+              } catch (e) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF10B981),
+            ),
+            child: const Text('Terima', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRejectDialog(BuildContext context, CustomOrder order) {
+    final reasonController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Tolak Pesanan'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Berikan alasan penolakan:'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: reasonController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Contoh: Budget tidak mencukupi untuk jenis bunga yang diminta',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (reasonController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Alasan penolakan harus diisi'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              try {
+                final service = FirebaseService();
+                await service.updateCustomOrderStatus(
+                  order.id,
+                  'rejected',
+                  rejectionReason: reasonController.text.trim(),
+                );
+
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Pesanan ditolak'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Tolak', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _markAsCompleted(BuildContext context, CustomOrder order) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Tandai Selesai'),
+        content: const Text('Apakah pesanan ini sudah selesai dan terkirim?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                final service = FirebaseService();
+                await service.updateCustomOrderStatus(order.id, 'completed');
+
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Pesanan ditandai selesai!'),
+                    backgroundColor: Color(0xFF5B21B6),
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF5B21B6),
+            ),
+            child: const Text('Ya, Selesai', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 }

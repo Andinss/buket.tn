@@ -1,6 +1,5 @@
 import 'package:buket_tn/models/cart_item.dart';
 import 'package:buket_tn/pages/favorite_page.dart';
-import 'package:buket_tn/services/firebase_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,7 +8,7 @@ import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/favorite_provider.dart';
 import '../utils/helpers.dart';
-import '../widgets/order_confirmation_dialog.dart';
+import '../pages/checkout_page.dart'; 
 import 'main_navigation.dart';
 
 class DetailPage extends StatefulWidget {
@@ -46,67 +45,20 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   void _buyNow() {
-    // ignore: unused_local_variable
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final cart = Provider.of<CartProvider>(context, listen: false);
     final total = widget.bouquet.price * quantity;
     
-    _showOrderConfirmationDialog([CartItem(bouquet: widget.bouquet, quantity: quantity)], total, cart);
-  }
-
-  void _showOrderConfirmationDialog(List<CartItem> items, int total, CartProvider cart) {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    
-    showDialog(
-      context: context,
-      builder: (context) => OrderConfirmationDialog(
-        items: items,
-        total: total,
-        auth: auth,
-        onConfirm: (phone, address, city, postalCode, paymentMethod) async {
-          if (phone.isNotEmpty) {
-            await auth.updateProfile(
-              auth.user?.displayName ?? 'User',
-              phone,
-              address,
-              city,
-              postalCode,
-              paymentMethod,
-            );
-          }
-          
-          final service = FirebaseService();
-          try {
-            await service.placeOrder(
-              auth.user!.uid, 
-              items, 
-              total.toDouble(),
-              paymentMethod  
-            );
-            
-            for (var item in items) {
-              cart.removeItem(item.bouquet.id);
-            }
-            
-            Navigator.popUntil(context, (route) => route.isFirst);
-            
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Pesanan berhasil dibuat!'),
-                backgroundColor: Color(0xFFFF6B9D),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          } catch (e) {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: $e'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
+    // Navigasi ke halaman checkout penuh
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutPage(
+          items: [CartItem(bouquet: widget.bouquet, quantity: quantity)],
+          total: total,
+          auth: auth,
+          cart: cart,
+        ),
       ),
     );
   }

@@ -132,8 +132,8 @@ class _HomePageState extends State<HomePage> {
               activeColor: const Color(0xFFFF6B9D),
             ),
             RadioListTile<String>(
-              title: const Text('Harga: Murah - Mahal'),
-              value: 'Murah-Mahal',
+              title: const Text('Harga: Rp. 0 - Rp. 10.000.000'),
+              value: 'Rp. 0 - Rp. 10.000.000',
               groupValue: priceFilter,
               onChanged: (value) {
                 setState(() => priceFilter = value!);
@@ -142,8 +142,8 @@ class _HomePageState extends State<HomePage> {
               activeColor: const Color(0xFFFF6B9D),
             ),
             RadioListTile<String>(
-              title: const Text('Harga: Mahal - Murah'),
-              value: 'Mahal-Murah',
+              title: const Text('Harga: Rp. 10.000.000 - Rp. 0'),
+              value: 'Rp. 10.000.000 - Rp. 0',
               groupValue: priceFilter,
               onChanged: (value) {
                 setState(() => priceFilter = value!);

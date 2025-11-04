@@ -31,7 +31,7 @@ class FirebaseService {
       final uid = userCred.user!.uid;
       
       String role = 'buyer';
-      if (email.toLowerCase() == 'andinn1404@gmail.com') {
+      if (email.toLowerCase() == 'admin@gmail.com') {
         role = 'seller';
       }
       
@@ -64,7 +64,7 @@ class FirebaseService {
       if (!snapshot.exists) {
         String role = 'buyer';
         final email = userCred.user!.email ?? '';
-        if (email.toLowerCase() == 'andinn1404@gmail.com') {
+        if (email.toLowerCase() == 'admin@gmail.com') {
           role = 'seller';
         }
         
