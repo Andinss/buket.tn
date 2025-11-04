@@ -6,8 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'dart:convert';
 
-// ignore: unused_import
-import '../pages/add_product_page.dart'; // TAMBAHKAN ini di bagian atas
 import '../providers/auth_provider.dart';
 import '../providers/bouquet_provider.dart';
 import '../services/firebase_service.dart';

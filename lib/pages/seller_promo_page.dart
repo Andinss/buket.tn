@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../services/firebase_service.dart';
+import 'add_promo_page.dart'; // IMPORT HALAMAN BARU
 
 class SellerPromoPage extends StatefulWidget {
   const SellerPromoPage({super.key});
@@ -32,7 +33,15 @@ class _SellerPromoPageState extends State<SellerPromoPage> {
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddPromoDialog(context),
+        onPressed: () {
+          // NAVIGASI KE HALAMAN FULL SCREEN
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddPromoPage(),
+            ),
+          );
+        },
         backgroundColor: const Color(0xFFFF6B9D),
         icon: const Icon(Icons.add),
         label: const Text('Tambah Promo'),
@@ -236,7 +245,15 @@ class _SellerPromoPageState extends State<SellerPromoPage> {
                 Row(
                   children: [
                     IconButton(
-                      onPressed: () => _showEditPromoDialog(context, promo),
+                      onPressed: () {
+                        // NAVIGASI KE HALAMAN EDIT
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddPromoPage(promo: promo),
+                          ),
+                        );
+                      },
                       icon: const Icon(Icons.edit, color: Color(0xFFFF6B9D)),
                     ),
                     IconButton(
@@ -258,349 +275,6 @@ class _SellerPromoPageState extends State<SellerPromoPage> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showAddPromoDialog(BuildContext context) {
-    final titleController = TextEditingController();
-    final subtitleController = TextEditingController();
-    final orderController = TextEditingController(text: '0');
-    String color1 = 'FF6B9D';
-    String color2 = 'FF8FAB';
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Tambah Promo Baru'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Judul Promo',
-                    hintText: 'Contoh: Big Sale',
-                    prefixIcon: const Icon(Icons.title, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: subtitleController,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: 'Deskripsi',
-                    hintText: 'Contoh: Get Up To 50% Off\\non all flowers this week!',
-                    prefixIcon: const Icon(Icons.description, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: orderController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Urutan (0 = paling awal)',
-                    prefixIcon: const Icon(Icons.sort, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text('Pilih Warna Gradient', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        children: [
-                          const Text('Warna 1', style: TextStyle(fontSize: 12)),
-                          const SizedBox(height: 8),
-                          _buildColorPicker(color1, (newColor) {
-                            setState(() => color1 = newColor);
-                          }),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          const Text('Warna 2', style: TextStyle(fontSize: 12)),
-                          const SizedBox(height: 8),
-                          _buildColorPicker(color2, (newColor) {
-                            setState(() => color2 = newColor);
-                          }),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  height: 100,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Color(int.parse('0xFF$color1')),
-                        Color(int.parse('0xFF$color2')),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Preview Gradient',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (titleController.text.isEmpty || subtitleController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Judul dan deskripsi tidak boleh kosong'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                  return;
-                }
-
-                try {
-                  await _service.db.collection('promos').add({
-                    'title': titleController.text,
-                    'subtitle': subtitleController.text,
-                    'color1': color1,
-                    'color2': color2,
-                    'isActive': true,
-                    'order': int.tryParse(orderController.text) ?? 0,
-                    'createdAt': FieldValue.serverTimestamp(),
-                  });
-
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Promo berhasil ditambahkan!'),
-                      backgroundColor: Color(0xFFFF6B9D),
-                    ),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF6B9D),
-              ),
-              child: const Text('Tambah', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showEditPromoDialog(BuildContext context, Promo promo) {
-    final titleController = TextEditingController(text: promo.title);
-    final subtitleController = TextEditingController(text: promo.subtitle);
-    final orderController = TextEditingController(text: promo.order.toString());
-    String color1 = promo.color1;
-    String color2 = promo.color2;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Edit Promo'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Judul Promo',
-                    prefixIcon: const Icon(Icons.title, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: subtitleController,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: 'Deskripsi',
-                    prefixIcon: const Icon(Icons.description, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: orderController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Urutan',
-                    prefixIcon: const Icon(Icons.sort, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text('Pilih Warna Gradient', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        children: [
-                          const Text('Warna 1', style: TextStyle(fontSize: 12)),
-                          const SizedBox(height: 8),
-                          _buildColorPicker(color1, (newColor) {
-                            setState(() => color1 = newColor);
-                          }),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          const Text('Warna 2', style: TextStyle(fontSize: 12)),
-                          const SizedBox(height: 8),
-                          _buildColorPicker(color2, (newColor) {
-                            setState(() => color2 = newColor);
-                          }),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  height: 100,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Color(int.parse('0xFF$color1')),
-                        Color(int.parse('0xFF$color2')),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Preview Gradient',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  await _service.db.collection('promos').doc(promo.id).update({
-                    'title': titleController.text,
-                    'subtitle': subtitleController.text,
-                    'color1': color1,
-                    'color2': color2,
-                    'order': int.tryParse(orderController.text) ?? 0,
-                  });
-
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Promo berhasil diperbarui!'),
-                      backgroundColor: Color(0xFFFF6B9D),
-                    ),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF6B9D),
-              ),
-              child: const Text('Perbarui', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildColorPicker(String currentColor, Function(String) onColorSelected) {
-    final colors = {
-      'FF6B9D': 'Pink',
-      'FF8FAB': 'Light Pink',
-      '6366F1': 'Blue',
-      '8B5CF6': 'Purple',
-      '10B981': 'Green',
-      '34D399': 'Light Green',
-      'F59E0B': 'Orange',
-      'EF4444': 'Red',
-    };
-
-    return DropdownButtonFormField<String>(
-      value: currentColor,
-      decoration: InputDecoration(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-      items: colors.entries.map((entry) {
-        return DropdownMenuItem(
-          value: entry.key,
-          child: Row(
-            children: [
-              Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: Color(int.parse('0xFF${entry.key}')),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(entry.value, style: const TextStyle(fontSize: 12)),
-            ],
-          ),
-        );
-      }).toList(),
-      onChanged: (value) {
-        if (value != null) onColorSelected(value);
-      },
     );
   }
 

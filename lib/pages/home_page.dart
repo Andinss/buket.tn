@@ -24,6 +24,7 @@ class _HomePageState extends State<HomePage> {
   String selectedCategory = 'All';
   String searchQuery = '';
   String selectedColor = 'Semua';
+  String priceFilter = 'Default'; 
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final PageController _promoController = PageController();
@@ -67,7 +68,6 @@ class _HomePageState extends State<HomePage> {
       if (mounted) setState(() {});
     });
 
-    // Auto slide promo
     Future.delayed(const Duration(seconds: 3), () {
       _autoSlidePromo();
     });
@@ -105,6 +105,58 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // TAMBAHAN: Fungsi untuk menampilkan dialog filter harga
+  void _showPriceFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.sort, color: Color(0xFFFF6B9D)),
+            SizedBox(width: 8),
+            Text('Urutkan Harga'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<String>(
+              title: const Text('Default'),
+              value: 'Default',
+              groupValue: priceFilter,
+              onChanged: (value) {
+                setState(() => priceFilter = value!);
+                Navigator.pop(context);
+              },
+              activeColor: const Color(0xFFFF6B9D),
+            ),
+            RadioListTile<String>(
+              title: const Text('Harga: Murah - Mahal'),
+              value: 'Murah-Mahal',
+              groupValue: priceFilter,
+              onChanged: (value) {
+                setState(() => priceFilter = value!);
+                Navigator.pop(context);
+              },
+              activeColor: const Color(0xFFFF6B9D),
+            ),
+            RadioListTile<String>(
+              title: const Text('Harga: Mahal - Murah'),
+              value: 'Mahal-Murah',
+              groupValue: priceFilter,
+              onChanged: (value) {
+                setState(() => priceFilter = value!);
+                Navigator.pop(context);
+              },
+              activeColor: const Color(0xFFFF6B9D),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
@@ -118,7 +170,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     // Filter berdasarkan pencarian dan warna
-    final filteredBouquets = allBouquets.where((b) {
+    var filteredBouquets = allBouquets.where((b) {
       final matchesSearch = b.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
           b.description.toLowerCase().contains(searchQuery.toLowerCase()) ||
           b.category.toLowerCase().contains(searchQuery.toLowerCase());
@@ -131,7 +183,13 @@ class _HomePageState extends State<HomePage> {
       return matchesSearch && matchesColor;
     }).toList();
 
-    // Cek apakah user adalah seller
+    // TAMBAHAN: Sorting berdasarkan harga
+    if (priceFilter == 'Rp. 0 - Rp. 10.000.000') {
+      filteredBouquets.sort((a, b) => a.price.compareTo(b.price));
+    } else if (priceFilter == 'Rp. 10.000.000 - Rp. 0') {
+      filteredBouquets.sort((a, b) => b.price.compareTo(a.price));
+    }
+
     final isSeller = auth.user?.role == 'seller';
 
     return Scaffold(
@@ -257,6 +315,24 @@ class _HomePageState extends State<HomePage> {
                               }).toList(),
                             ),
                         ],
+                      ),
+                    ),
+                  ),
+                  // TAMBAHAN: Tombol Sort Harga
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _showPriceFilterDialog,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: priceFilter != 'Default' ? const Color(0xFFFF6B9D) : Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
+                      ),
+                      child: Icon(
+                        Icons.sort,
+                        color: priceFilter != 'Default' ? Colors.white : const Color(0xFFFF6B9D),
+                        size: 24,
                       ),
                     ),
                   ),
@@ -436,7 +512,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      // Floating Action Button untuk Custom Order (hanya untuk non-seller)
       floatingActionButton: !isSeller ? FloatingActionButton(
         onPressed: () {
           Navigator.push(

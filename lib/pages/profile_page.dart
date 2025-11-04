@@ -3,24 +3,10 @@ import 'package:provider/provider.dart';
 import '../pages/seller_promo_page.dart';
 
 import '../providers/auth_provider.dart';
-// ignore: unused_import
-import '../providers/address_provider.dart';
 import 'address_list_page.dart';
-// ignore: unused_import
-import 'my_custom_orders_page.dart';
-import 'main_navigation.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
-
-  // ignore: unused_element
-  void _navigateToPage(BuildContext context, int index) {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => MainNavigation(initialIndex: index)),
-      (route) => false,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +192,6 @@ class ProfilePage extends StatelessWidget {
                       onTap: () => _showPaymentDialog(context, auth),
                       color: const Color(0xFFDB2777),
                     ),
-                  // MENU PESANAN CUSTOM DIHAPUS
                   const Divider(height: 1),
                   _buildMenuTile(
                     icon: Icons.security,
@@ -481,104 +466,6 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
-
-    // ignore: unused_element
-    void _showAddressDialog(BuildContext context, AuthProvider auth) {
-      final addressController = TextEditingController(text: auth.address);
-      final cityController = TextEditingController(text: auth.city);
-      final postalCodeController = TextEditingController(text: auth.postalCode);
-      final isSeller = auth.role == 'seller';
-
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            isSeller ? 'Alamat Toko' : 'Alamat Pengiriman',
-            style: const TextStyle(color: Color(0xFFDB2777)),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: addressController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Alamat Lengkap',
-                    hintText: 'Masukkan alamat lengkap',
-                    prefixIcon: const Icon(Icons.location_on, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: cityController,
-                  decoration: InputDecoration(
-                    labelText: 'Kota/Kabupaten',
-                    prefixIcon: const Icon(Icons.location_city, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: postalCodeController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Kode Pos',
-                    prefixIcon: const Icon(Icons.markunread_mailbox, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (addressController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Alamat tidak boleh kosong'), backgroundColor: Colors.red),
-                  );
-                  return;
-                }
-
-                try {
-                  await auth.updateProfile(
-                    auth.user?.displayName ?? 'User',
-                    auth.phoneNumber,
-                    addressController.text,
-                    cityController.text,
-                    postalCodeController.text,
-                    auth.paymentMethod
-                  );
-                  
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(isSeller ? 'Alamat toko berhasil diperbarui!' : 'Alamat berhasil diperbarui!'),
-                      backgroundColor: const Color(0xFFFF6B9D),
-                    ),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF6B9D)
-              ),
-              child: const Text('Simpan', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      );
-    }
 
     void _showPaymentDialog(BuildContext context, AuthProvider auth) {
       String selectedMethod = auth.paymentMethod.isNotEmpty ? 
@@ -874,80 +761,6 @@ class ProfilePage extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      );
-    }
-
-    // ignore: unused_element
-    void _showHelpDialog(BuildContext context) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Bantuan'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Hubungi Kami:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                const SizedBox(height: 8),
-                const Text('📧 Email: support@tokobunga.com', style: TextStyle(fontSize: 12)),
-                const SizedBox(height: 4),
-                const Text('📞 WhatsApp: +62 812-3456-7890', style: TextStyle(fontSize: 12)),
-                const SizedBox(height: 4),
-                const Text('⏰ Jam Operasional: 09:00 - 17:00 WIB', style: TextStyle(fontSize: 12)),
-                const SizedBox(height: 16),
-                const Text('FAQ Umum:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                const SizedBox(height: 8),
-                const Text('• Berapa lama pengiriman?\nPengiriman 1-3 hari kerja', style: TextStyle(fontSize: 12)),
-                const SizedBox(height: 8),
-                const Text('• Bagaimana jika barang rusak?\nHubungi CS kami untuk penggantian', style: TextStyle(fontSize: 12)),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Tutup'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // ignore: unused_element
-    void _showAboutDialog(BuildContext context) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Tentang Kami'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Toko Bunga Cantik', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFDB2777))),
-                const SizedBox(height: 8),
-                const Text('Versi: 1.0.0', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                const SizedBox(height: 16),
-                const Text('Kami adalah aplikasi toko bunga online yang menyediakan rangkaian bunga segar berkualitas tinggi untuk berbagai acara spesial Anda.', style: TextStyle(fontSize: 13, height: 1.6)),
-                const SizedBox(height: 16),
-                const Text('Fitur:', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                const Text('✓ Bunga segar pilihan\n✓ Pengiriman cepat\n✓ Cicilan 0%\n✓ Garansi kepuasan', style: TextStyle(fontSize: 12, height: 1.8)),
-                const SizedBox(height: 16),
-                const Text('© 2025 Toko Bunga Cantik. All rights reserved.', style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic)),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Tutup'),
-            ),
-          ],
         ),
       );
     }

@@ -54,7 +54,6 @@ class _MainNavigationState extends State<MainNavigation> {
 
     return Scaffold(
       body: pages[_selectedIndex],
-      // FAB hanya ditampilkan di Home Page (index 0) untuk buyer
       floatingActionButton: !isSeller && _selectedIndex == 0 ? FloatingActionButton(
         onPressed: () {
           Navigator.push(
@@ -62,7 +61,7 @@ class _MainNavigationState extends State<MainNavigation> {
             MaterialPageRoute(builder: (context) => const CustomOrderPage()),
           );
         },
-        backgroundColor: const Color(0xFFFF6B9D), // PINK
+        backgroundColor: const Color(0xFFFF6B9D), 
         child: const Icon(Icons.auto_awesome, color: Colors.white),
       ) : null,
       bottomNavigationBar: Container(

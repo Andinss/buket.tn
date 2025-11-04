@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/custom_order.dart';
+import '../models/order.dart';
 import '../utils/helpers.dart';
 import '../pages/order_chat_page.dart';
-import '../models/order.dart';
+import '../providers/auth_provider.dart';
 
 class CustomOrderDetailPage extends StatelessWidget {
   final CustomOrder order;
@@ -12,6 +14,8 @@ class CustomOrderDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    
     Color statusColor;
     Color statusTextColor;
     String statusLabel;
@@ -352,49 +356,48 @@ class CustomOrderDetailPage extends StatelessWidget {
                 ),
               ),
 
-            // Tombol Chat dengan Penjual
-            if (order.customOrderId != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      // Buat dummy order untuk chat
-                      final dummyOrder = Order(
-                        id: order.customOrderId!,
-                        buyerId: order.buyerId,
-                        items: [],
-                        total: order.budget.toDouble(),
-                        status: 'placed',
-                        createdAt: order.createdAt,
-                        isCustomOrder: true,
-                        customOrderId: order.id,
-                      );
-                      
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => OrderChatPage(order: dummyOrder),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                    label: const Text(
-                      'Chat dengan Penjual',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFFF6B9D),
-                      side: const BorderSide(color: Color(0xFFFF6B9D), width: 2),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+            // TAMBAHAN: Tombol Chat dengan Admin
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final dummyOrder = Order(
+                      id: auth.user!.uid, 
+                      buyerId: auth.user!.uid,
+                      items: [],
+                      total: order.budget.toDouble(),
+                      status: 'placed',
+                      createdAt: order.createdAt,
+                      isCustomOrder: true,
+                      customOrderId: order.id,
+                    );
+                    
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OrderChatPage(order: dummyOrder),
                       ),
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline, size: 20),
+                  label: const Text(
+                    'Chat dengan Admin',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF6B9D),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    elevation: 2,
                   ),
                 ),
               ),
+            ),
 
             const SizedBox(height: 30),
           ],
