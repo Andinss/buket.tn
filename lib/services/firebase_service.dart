@@ -206,6 +206,18 @@ class FirebaseService {
         });
   }
 
+    Stream<List<Order>> getAllUserOrders(String uid) {
+    return db.collection('orders')
+        .where('buyerId', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map((doc) => Order.fromDoc(doc)).toList())
+        .handleError((error) {
+          debugPrint('Error in getAllUserOrders: $error');
+          return <Order>[];
+        });
+  }
+
   Future<void> toggleFavorite(String uid, String bouquetId) async {
     final favRef = db.collection('users').doc(uid).collection('favorites').doc(bouquetId);
     final snap = await favRef.get();
@@ -549,11 +561,29 @@ class FirebaseService {
   }
 
   // Chat related methods
-    Future<void> sendChatMessage(ChatMessage message) async {
+Future<void> sendChatMessage(ChatMessage message) async {
       try {
-        final chatRef = db.collection('chats').doc(message.orderId).collection('messages');
+        // Get buyer ID from order
+        final orderDoc = await db.collection('orders').doc(message.orderId).get();
+        if (!orderDoc.exists) {
+          throw Exception('Order not found');
+        }
+        
+        final buyerId = (orderDoc.data()?['buyerId'] ?? '') as String;
+        
+        // Save to buyer's chat room
+        final chatRef = db.collection('chats').doc(buyerId).collection('messages');
         await chatRef.add(message.toMap());
-        debugPrint('Message sent to order: ${message.orderId}');
+        
+        // Update last message in chat room metadata
+        await db.collection('chats').doc(buyerId).set({
+          'buyerId': buyerId,
+          'lastMessageTime': FieldValue.serverTimestamp(),
+          'lastMessage': message.message,
+          'lastSenderId': message.senderId,
+        }, SetOptions(merge: true));
+        
+        debugPrint('Message sent to buyer chat: $buyerId');
       } catch (e) {
         debugPrint('Error sending message: $e');
         rethrow;
@@ -561,31 +591,48 @@ class FirebaseService {
     }
 
     Stream<List<ChatMessage>> getChatMessages(String orderId) {
-      return db.collection('chats')
+      return db.collection('orders')
           .doc(orderId)
-          .collection('messages')
-          .orderBy('timestamp', descending: false)
-          .snapshots()
-          .map((snapshot) {
-            return snapshot.docs.map((doc) {
-              try {
-                return ChatMessage.fromDoc(doc);
-              } catch (e) {
-                debugPrint('Error parsing chat message ${doc.id}: $e');
-                return null;
-              }
-            }).whereType<ChatMessage>().toList();
-          })
-          .handleError((error) {
-            debugPrint('Error getting chat messages: $error');
-            return <ChatMessage>[];
-          });
+          .get()
+          .asStream()
+          .asyncExpand((orderDoc) {
+        if (!orderDoc.exists) {
+          return Stream.value(<ChatMessage>[]);
+        }
+        
+        final buyerId = (orderDoc.data()?['buyerId'] ?? '') as String;
+        
+        return db.collection('chats')
+            .doc(buyerId)
+            .collection('messages')
+            .orderBy('timestamp', descending: false)
+            .snapshots()
+            .map((snapshot) {
+              return snapshot.docs.map((doc) {
+                try {
+                  return ChatMessage.fromDoc(doc);
+                } catch (e) {
+                  debugPrint('Error parsing chat message ${doc.id}: $e');
+                  return null;
+                }
+              }).whereType<ChatMessage>().toList();
+            });
+      }).handleError((error) {
+        debugPrint('Error getting chat messages: $error');
+        return <ChatMessage>[];
+      });
     }
 
     Future<void> markMessagesAsRead(String orderId, String userId) async {
       try {
+        // Get buyer ID from order
+        final orderDoc = await db.collection('orders').doc(orderId).get();
+        if (!orderDoc.exists) return;
+        
+        final buyerId = (orderDoc.data()?['buyerId'] ?? '') as String;
+        
         final messagesSnapshot = await db.collection('chats')
-            .doc(orderId)
+            .doc(buyerId)
             .collection('messages')
             .where('senderId', isNotEqualTo: userId)
             .where('isRead', isEqualTo: false)
@@ -597,7 +644,7 @@ class FirebaseService {
         }
         
         await batch.commit();
-        debugPrint('Messages marked as read for order: $orderId');
+        debugPrint('Messages marked as read for buyer: $buyerId');
       } catch (e) {
         debugPrint('Error marking messages as read: $e');
       }
@@ -605,8 +652,13 @@ class FirebaseService {
 
     Future<int> getUnreadMessageCount(String orderId, String userId) async {
       try {
+        final orderDoc = await db.collection('orders').doc(orderId).get();
+        if (!orderDoc.exists) return 0;
+        
+        final buyerId = (orderDoc.data()?['buyerId'] ?? '') as String;
+        
         final snapshot = await db.collection('chats')
-            .doc(orderId)
+            .doc(buyerId)
             .collection('messages')
             .where('senderId', isNotEqualTo: userId)
             .where('isRead', isEqualTo: false)
@@ -619,64 +671,65 @@ class FirebaseService {
       }
     }
 
-    // Get all chat conversations for seller
+    // Get all chat conversations for seller - GROUPED BY BUYER
     Stream<List<Map<String, dynamic>>> getSellerChatConversations() {
       return db.collection('chats')
+          .orderBy('lastMessageTime', descending: true)
           .snapshots()
-          .asyncMap((snapshot) async {
+          .asyncMap((chatsSnapshot) async {
             List<Map<String, dynamic>> conversations = [];
             
-            for (var chatDoc in snapshot.docs) {
-              final orderId = chatDoc.id;
-              
-              // Get order details
-              final orderDoc = await db.collection('orders').doc(orderId).get();
-              if (!orderDoc.exists) continue;
-              
-              final order = Order.fromDoc(orderDoc);
-              
-              // Get last message
-              final messagesSnapshot = await db.collection('chats')
-                  .doc(orderId)
-                  .collection('messages')
-                  .orderBy('timestamp', descending: true)
-                  .limit(1)
-                  .get();
-              
-              ChatMessage? lastMessage;
-              if (messagesSnapshot.docs.isNotEmpty) {
-                lastMessage = ChatMessage.fromDoc(messagesSnapshot.docs.first);
+            for (var chatDoc in chatsSnapshot.docs) {
+              try {
+                final buyerId = chatDoc.id;
+                final chatData = chatDoc.data();
+                
+                // Get buyer info
+                final buyerDoc = await db.collection('users').doc(buyerId).get();
+                final buyerName = buyerDoc.exists 
+                    ? (buyerDoc.data()?['displayName'] ?? 'Unknown') 
+                    : 'Unknown';
+                
+                // Get buyer's orders count
+                final ordersSnapshot = await db.collection('orders')
+                    .where('buyerId', isEqualTo: buyerId)
+                    .get();
+                
+                final ordersCount = ordersSnapshot.docs.length;
+                
+                // Get last message
+                final messagesSnapshot = await db.collection('chats')
+                    .doc(buyerId)
+                    .collection('messages')
+                    .orderBy('timestamp', descending: true)
+                    .limit(1)
+                    .get();
+                
+                ChatMessage? lastMessage;
+                if (messagesSnapshot.docs.isNotEmpty) {
+                  lastMessage = ChatMessage.fromDoc(messagesSnapshot.docs.first);
+                }
+                
+                // Get unread count (messages from this buyer)
+                final unreadSnapshot = await db.collection('chats')
+                    .doc(buyerId)
+                    .collection('messages')
+                    .where('senderId', isEqualTo: buyerId)
+                    .where('isRead', isEqualTo: false)
+                    .get();
+                
+                conversations.add({
+                  'buyerId': buyerId,
+                  'buyerName': buyerName,
+                  'ordersCount': ordersCount,
+                  'lastMessage': lastMessage,
+                  'lastMessageTime': chatData['lastMessageTime'],
+                  'unreadCount': unreadSnapshot.docs.length,
+                });
+              } catch (e) {
+                debugPrint('Error processing chat ${chatDoc.id}: $e');
               }
-              
-              // Get unread count (messages from buyer)
-              final unreadSnapshot = await db.collection('chats')
-                  .doc(orderId)
-                  .collection('messages')
-                  .where('senderId', isEqualTo: order.buyerId)
-                  .where('isRead', isEqualTo: false)
-                  .get();
-              
-              // Get buyer info
-              final buyerDoc = await db.collection('users').doc(order.buyerId).get();
-              final buyerName = buyerDoc.exists 
-                  ? (buyerDoc.data()?['displayName'] ?? 'Unknown') 
-                  : 'Unknown';
-              
-              conversations.add({
-                'orderId': orderId,
-                'order': order,
-                'buyerName': buyerName,
-                'lastMessage': lastMessage,
-                'unreadCount': unreadSnapshot.docs.length,
-              });
             }
-            
-            // Sort by last message timestamp
-            conversations.sort((a, b) {
-              final aTime = a['lastMessage']?.timestamp ?? DateTime(2000);
-              final bTime = b['lastMessage']?.timestamp ?? DateTime(2000);
-              return bTime.compareTo(aTime);
-            });
             
             return conversations;
           });

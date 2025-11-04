@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../services/firebase_service.dart';
-import '../models/order.dart';
 import '../models/chat_message.dart';
-import '../pages/order_chat_page.dart';
-import '../utils/helpers.dart';
+import '../pages/buyer_chat_page.dart';
 
 class SellerChatListPage extends StatelessWidget {
   const SellerChatListPage({super.key});
@@ -96,15 +94,17 @@ class SellerChatListPage extends StatelessWidget {
             itemCount: conversations.length,
             itemBuilder: (context, index) {
               final conv = conversations[index];
-              final order = conv['order'] as Order;
+              final buyerId = conv['buyerId'] as String;
               final buyerName = conv['buyerName'] as String;
+              final ordersCount = conv['ordersCount'] as int;
               final lastMessage = conv['lastMessage'] as ChatMessage?;
               final unreadCount = conv['unreadCount'] as int;
 
               return _buildChatItem(
                 context,
-                order,
+                buyerId,
                 buyerName,
+                ordersCount,
                 lastMessage,
                 unreadCount,
               );
@@ -117,21 +117,21 @@ class SellerChatListPage extends StatelessWidget {
 
   Widget _buildChatItem(
     BuildContext context,
-    Order order,
+    String buyerId,
     String buyerName,
+    int ordersCount,
     ChatMessage? lastMessage,
     int unreadCount,
   ) {
-    final statusColor = getStatusColor(order.status);
-    final statusTextColor = getStatusTextColor(order.status);
-    final statusLabel = getStatusLabel(order.status);
-
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderChatPage(order: order),
+            builder: (context) => BuyerChatPage(
+              buyerId: buyerId,
+              buyerName: buyerName,
+            ),
           ),
         );
       },
@@ -141,9 +141,6 @@ class SellerChatListPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: order.isCustomOrder
-              ? Border.all(color: const Color(0xFF6366F1), width: 1)
-              : null,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -167,7 +164,9 @@ class SellerChatListPage extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  buyerName.substring(0, 1).toUpperCase(),
+                  buyerName.isNotEmpty 
+                      ? buyerName.substring(0, 1).toUpperCase()
+                      : '?',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -209,42 +208,12 @@ class SellerChatListPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   
-                  Row(
-                    children: [
-                      if (order.isCustomOrder)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          margin: const EdgeInsets.only(right: 6),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'CUSTOM',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      Expanded(
-                        child: Text(
-                          'Order #${order.id.substring(0, 8).toUpperCase()}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    '$ordersCount pesanan',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   
@@ -276,53 +245,28 @@ class SellerChatListPage extends StatelessWidget {
               ),
             ),
             
-            // Right side - Status & Unread badge
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: statusTextColor,
-                    ),
-                  ),
+            // Unread badge
+            if (unreadCount > 0)
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFF6B9D),
+                  shape: BoxShape.circle,
                 ),
-                if (unreadCount > 0) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFFF6B9D),
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 24,
-                      minHeight: 24,
-                    ),
-                    child: Text(
-                      unreadCount > 99 ? '99+' : '$unreadCount',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                constraints: const BoxConstraints(
+                  minWidth: 24,
+                  minHeight: 24,
+                ),
+                child: Text(
+                  unreadCount > 99 ? '99+' : '$unreadCount',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                ],
-              ],
-            ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
           ],
         ),
       ),
