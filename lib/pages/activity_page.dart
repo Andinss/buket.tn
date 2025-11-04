@@ -4,11 +4,11 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/firebase_service.dart';
 import '../models/order.dart';
+import '../models/custom_order.dart';
 import '../utils/helpers.dart';
 import 'main_navigation.dart';
-// ignore: unused_import
-import 'order_chat_page.dart';
 import 'order_detail_full_page.dart';
+import 'custom_order_detail_page.dart';
 
 class ActivityPage extends StatefulWidget {
   const ActivityPage({super.key});
@@ -23,7 +23,7 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -33,7 +33,6 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
   }
 
   void _navigateToHome() {
-    // Navigate to home page using Navigator
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const MainNavigation()),
@@ -72,70 +71,122 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
                     Tab(text: 'Dikemas'),
                     Tab(text: 'Dikirim'),
                     Tab(text: 'Selesai'),
+                    Tab(text: 'Custom'),
                   ],
                 ),
               ),
       ),
       body: auth.user == null
           ? const Center(child: Text('Silakan login untuk melihat pesanan'))
-          : StreamBuilder<List<Order>>(
-              stream: service.getUserOrders(auth.user!.uid),
-              builder: (context, snapshot) {
-                if (snapshot.hasData && snapshot.data!.isEmpty) {
-                  return _buildEmptyOrders();
-                }
-
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(color: Color(0xFFFF6B9D)),
-                        SizedBox(height: 16),
-                        Text('Memuat pesanan...'),
-                      ],
-                    ),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline, size: 80, color: Color(0xFFFF6B9D)),
-                        const SizedBox(height: 16),
-                        const Text('Terjadi kesalahan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Text('Error: ${snapshot.error}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      ],
-                    ),
-                  );
-                }
-
-                final allOrders = snapshot.data ?? [];
-                
-                if (allOrders.isEmpty) {
-                  return _buildEmptyOrders();
-                }
-
-                final placedOrders = allOrders.where((o) => o.status == 'placed').toList();
-                final processingOrders = allOrders.where((o) => o.status == 'processing').toList();
-                final shippedOrders = allOrders.where((o) => o.status == 'shipped').toList();
-                final completedOrders = allOrders.where((o) => o.status == 'completed').toList();
-
-                return TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildOrdersList(allOrders, 'Belum Ada Pesanan'),
-                    _buildOrdersList(placedOrders, 'Tidak ada pesanan yang diproses'),
-                    _buildOrdersList(processingOrders, 'Tidak ada pesanan yang dikemas'),
-                    _buildOrdersList(shippedOrders, 'Tidak ada pesanan yang dikirim'),
-                    _buildOrdersList(completedOrders, 'Tidak ada pesanan yang selesai'),
-                  ],
-                );
-              },
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAllOrdersTab(auth.user!.uid, service),
+                _buildOrdersByStatus(auth.user!.uid, service, 'placed'),
+                _buildOrdersByStatus(auth.user!.uid, service, 'processing'),
+                _buildOrdersByStatus(auth.user!.uid, service, 'shipped'),
+                _buildOrdersByStatus(auth.user!.uid, service, 'completed'),
+                _buildCustomOrdersTab(auth.user!.uid, service),
+              ],
             ),
+    );
+  }
+
+  Widget _buildAllOrdersTab(String userId, FirebaseService service) {
+    return StreamBuilder<List<Order>>(
+      stream: service.getUserOrders(userId),
+      builder: (context, orderSnapshot) {
+        return StreamBuilder<List<CustomOrder>>(
+          stream: service.getBuyerCustomOrders(userId),
+          builder: (context, customSnapshot) {
+            if (orderSnapshot.connectionState == ConnectionState.waiting ||
+                customSnapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: Color(0xFFFF6B9D)),
+                    SizedBox(height: 16),
+                    Text('Memuat pesanan...'),
+                  ],
+                ),
+              );
+            }
+
+            final orders = orderSnapshot.data ?? [];
+            final customOrders = customSnapshot.data ?? [];
+
+            if (orders.isEmpty && customOrders.isEmpty) {
+              return _buildEmptyOrders();
+            }
+
+            return ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                if (customOrders.isNotEmpty) ...[
+                  ...customOrders.map((order) => _buildCustomOrderItem(order)),
+                ],
+                ...orders.map((order) => _buildOrderItem(order)),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildOrdersByStatus(String userId, FirebaseService service, String status) {
+    return StreamBuilder<List<Order>>(
+      stream: service.getUserOrders(userId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFFFF6B9D)),
+          );
+        }
+
+        final allOrders = snapshot.data ?? [];
+        final filteredOrders = allOrders.where((o) => o.status == status).toList();
+
+        if (filteredOrders.isEmpty) {
+          return _buildEmptyState('Tidak ada pesanan dengan status ini');
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(20),
+          itemCount: filteredOrders.length,
+          itemBuilder: (context, index) {
+            return _buildOrderItem(filteredOrders[index]);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCustomOrdersTab(String userId, FirebaseService service) {
+    return StreamBuilder<List<CustomOrder>>(
+      stream: service.getBuyerCustomOrders(userId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFFFF6B9D)),
+          );
+        }
+
+        final customOrders = snapshot.data ?? [];
+
+        if (customOrders.isEmpty) {
+          return _buildEmptyState('Belum ada pesanan custom');
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(20),
+          itemCount: customOrders.length,
+          itemBuilder: (context, index) {
+            return _buildCustomOrderItem(customOrders[index]);
+          },
+        );
+      },
     );
   }
 
@@ -169,58 +220,69 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildOrdersList(List<Order> orders, String emptyMessage) {
-    if (orders.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(40),
-              decoration: const BoxDecoration(color: Color(0xFFFFE8F0), shape: BoxShape.circle),
-              child: const Icon(Icons.receipt_long_outlined, size: 80, color: Color(0xFFFF6B9D)),
-            ),
-            const SizedBox(height: 30),
-            Text(emptyMessage, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
-            const SizedBox(height: 12),
-            Text('Belum ada pesanan dengan status ini', style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-          ],
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        await Future.delayed(const Duration(seconds: 1));
-      },
-      color: const Color(0xFFFF6B9D),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(20),
-        itemCount: orders.length,
-        itemBuilder: (context, index) {
-          final order = orders[index];
-          return _buildOrderItem(order);
-        },
+  Widget _buildEmptyState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(40),
+            decoration: const BoxDecoration(color: Color(0xFFFFE8F0), shape: BoxShape.circle),
+            child: const Icon(Icons.receipt_long_outlined, size: 80, color: Color(0xFFFF6B9D)),
+          ),
+          const SizedBox(height: 30),
+          Text(message, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
+        ],
       ),
     );
   }
 
-  Widget _buildOrderItem(Order order) {
-    final statusColor = getStatusColor(order.status);
-    final statusTextColor = getStatusTextColor(order.status);
-    final statusLabel = getStatusLabel(order.status);
+  Widget _buildCustomOrderItem(CustomOrder order) {
+    Color statusColor;
+    Color statusTextColor;
+    String statusLabel;
+
+    switch (order.status) {
+      case 'pending':
+        statusColor = const Color(0xFFFEF3C7);
+        statusTextColor = const Color(0xFFC78500);
+        statusLabel = 'Menunggu';
+        break;
+      case 'accepted':
+        statusColor = const Color(0xFFDCFCE7);
+        statusTextColor = const Color(0xFF16A34A);
+        statusLabel = 'Diterima';
+        break;
+      case 'rejected':
+        statusColor = const Color(0xFFFEE2E2);
+        statusTextColor = const Color(0xFFDC2626);
+        statusLabel = 'Ditolak';
+        break;
+      case 'completed':
+        statusColor = const Color(0xFFDDD6FE);
+        statusTextColor = const Color(0xFF5B21B6);
+        statusLabel = 'Selesai';
+        break;
+      default:
+        statusColor = const Color(0xFFFFE8F0);
+        statusTextColor = const Color(0xFFFF6B9D);
+        statusLabel = 'Pending';
+    }
 
     return GestureDetector(
-      onTap: () => _showOrderDetailDialog(order),
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CustomOrderDetailPage(order: order),
+        ),
+      ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 15),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: order.isCustomOrder 
-              ? Border.all(color: const Color(0xFF6366F1), width: 2)
-              : null,
+          border: Border.all(color: const Color(0xFF6366F1), width: 2),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
         ),
         child: Column(
@@ -230,46 +292,42 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Text('Order #${order.id.substring(0, 8).toUpperCase()}', 
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
-                          if (order.isCustomOrder) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.auto_awesome, size: 10, color: Colors.white),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'CUSTOM',
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.auto_awesome, size: 10, color: Colors.white),
+                            SizedBox(width: 4),
+                            Text(
+                              'CUSTOM',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                           ],
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year} ${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '#${order.id.substring(0, 8).toUpperCase()}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D3142),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -288,35 +346,112 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
               ],
             ),
             const SizedBox(height: 12),
-            
-            // Payment Status
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Budget:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      Text(formatRupiah(order.budget), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D))),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text('${order.flowerType} • ${order.colorPreference} • ${order.occasion}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderItem(Order order) {
+    final statusColor = getStatusColor(order.status);
+    final statusTextColor = getStatusTextColor(order.status);
+    final statusLabel = getStatusLabel(order.status);
+
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OrderDetailFullPage(order: order, isSeller: false),
+        ),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 15),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: order.isCustomOrder ? Border.all(color: const Color(0xFF6366F1), width: 2) : null,
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(
-                  order.isPaid ? Icons.check_circle : Icons.pending,
-                  size: 14,
-                  color: order.isPaid ? const Color(0xFF16A34A) : const Color(0xFFC78500),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  order.isPaid ? 'Sudah Dibayar' : 'Belum Dibayar',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: order.isPaid ? const Color(0xFF16A34A) : const Color(0xFFC78500),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text('Order #${order.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
+                          if (order.isCustomOrder) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.auto_awesome, size: 10, color: Colors.white),
+                                  SizedBox(width: 4),
+                                  Text('CUSTOM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year} ${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  '• ${order.paymentMethod}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade600,
-                  ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(color: statusColor, borderRadius: BorderRadius.circular(20)),
+                  child: Text(statusLabel, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: statusTextColor)),
                 ),
               ],
             ),
-            
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(order.isPaid ? Icons.check_circle : Icons.pending, size: 14, color: order.isPaid ? const Color(0xFF16A34A) : const Color(0xFFC78500)),
+                const SizedBox(width: 6),
+                Text(
+                  order.isPaid ? 'Sudah Dibayar' : 'Belum Dibayar',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: order.isPaid ? const Color(0xFF16A34A) : const Color(0xFFC78500)),
+                ),
+                const SizedBox(width: 4),
+                Text('• ${order.paymentMethod}', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+              ],
+            ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
@@ -332,18 +467,10 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(
-                                '${item['name']} × ${item['qty']}',
-                                style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              child: Text('${item['name']} × ${item['qty']}', style: TextStyle(fontSize: 13, color: Colors.grey.shade700), maxLines: 2, overflow: TextOverflow.ellipsis),
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              formatRupiah(item['price'] * item['qty']),
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
-                            ),
+                            Text(formatRupiah(item['price'] * item['qty']), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF2D3142))),
                           ],
                         ),
                       )),
@@ -355,71 +482,11 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Total:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
-                Text(
-                  formatRupiah(order.total.toInt()),
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D)),
-                ),
+                Text(formatRupiah(order.total.toInt()), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D))),
               ],
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showOrderDetailDialog(Order order) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OrderDetailFullPage(order: order, isSeller: false),
-      ),
-    );
-  }
-
-  // ignore: unused_element
-  Widget _buildDetailSection({required String title, required List<Widget> children}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2D3142),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: children,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ignore: unused_element
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-          ),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2D3142)),
-          ),
-        ],
       ),
     );
   }

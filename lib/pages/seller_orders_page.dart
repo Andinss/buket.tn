@@ -5,6 +5,7 @@ import '../services/firebase_service.dart';
 import '../models/order.dart';
 import '../utils/helpers.dart';
 import 'order_detail_full_page.dart';
+import 'seller_custom_orders_page.dart';
 
 class SellerOrdersPage extends StatefulWidget {
   const SellerOrdersPage({super.key});
@@ -19,7 +20,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -113,6 +114,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> with SingleTickerPr
                 _buildSellerOrdersList(processingOrders, 'Tidak ada pesanan yang dikemas'),
                 _buildSellerOrdersList(shippedOrders, 'Tidak ada pesanan yang dikirim'),
                 _buildSellerOrdersList(completedOrders, 'Tidak ada pesanan yang selesai'),
+                const SellerCustomOrdersPage(), // TAB BARU
               ],
             );
           } catch (e) {

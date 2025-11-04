@@ -9,7 +9,8 @@ import 'profile_page.dart';
 import 'seller_products_page.dart';
 import 'seller_orders_page.dart';
 import 'seller_analytics_page.dart';
-import 'seller_chat_list_page.dart'; 
+import 'seller_chat_list_page.dart';
+import 'custom_order_page.dart';
 
 class MainNavigation extends StatefulWidget {
   final int initialIndex;
@@ -53,6 +54,16 @@ class _MainNavigationState extends State<MainNavigation> {
 
     return Scaffold(
       body: pages[_selectedIndex],
+      floatingActionButton: !isSeller ? FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CustomOrderPage()),
+          );
+        },
+        backgroundColor: const Color(0xFF6366F1),
+        child: const Icon(Icons.auto_awesome, color: Colors.white),
+      ) : null,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -63,7 +74,19 @@ class _MainNavigationState extends State<MainNavigation> {
           borderRadius: const BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
           child: BottomNavigationBar(
             currentIndex: _selectedIndex,
-            onTap: (index) => setState(() => _selectedIndex = index),
+            onTap: (index) {
+              // Handle chat admin untuk buyer
+              if (!isSeller && index == 4) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Fitur chat dengan admin akan segera hadir!'),
+                    backgroundColor: Color(0xFFFF6B9D),
+                  ),
+                );
+                return;
+              }
+              setState(() => _selectedIndex = index);
+            },
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.white,
             selectedItemColor: const Color(0xFFFF6B9D),
@@ -75,7 +98,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 ? const [
                     BottomNavigationBarItem(icon: Icon(Icons.store_rounded, size: 28), label: ''),
                     BottomNavigationBarItem(icon: Icon(Icons.receipt_long_rounded, size: 28), label: ''),
-                    BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_rounded, size: 28), label: ''), // CHANGED: Icon dari auto_awesome ke chat_bubble
+                    BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_rounded, size: 28), label: ''),
                     BottomNavigationBarItem(icon: Icon(Icons.trending_up_rounded, size: 28), label: ''),
                     BottomNavigationBarItem(icon: Icon(Icons.person_rounded, size: 28), label: ''),
                   ]
@@ -84,6 +107,7 @@ class _MainNavigationState extends State<MainNavigation> {
                     BottomNavigationBarItem(icon: Icon(Icons.receipt_long_rounded, size: 28), label: ''),
                     BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_rounded, size: 28), label: ''),
                     BottomNavigationBarItem(icon: Icon(Icons.person_rounded, size: 28), label: ''),
+                    BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_rounded, size: 28), label: ''),
                   ],
           ),
         ),

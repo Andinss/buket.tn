@@ -9,11 +9,13 @@ import '../services/firebase_service.dart';
 class BuyerChatPage extends StatefulWidget {
   final String buyerId;
   final String buyerName;
+  final Order? order; // TAMBAHKAN INI
 
   const BuyerChatPage({
     super.key,
     required this.buyerId,
     required this.buyerName,
+    this.order, // TAMBAHKAN INI
   });
 
   @override

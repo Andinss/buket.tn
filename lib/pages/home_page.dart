@@ -381,7 +381,7 @@ class _HomePageState extends State<HomePage> {
                               child: Column(
                                 children: [
                                   SizedBox(
-                                    height: 150,
+                                    height: 140,
                                     child: PageView.builder(
                                       controller: _promoController,
                                       onPageChanged: (index) {
@@ -392,7 +392,7 @@ class _HomePageState extends State<HomePage> {
                                         final promo = _promos[index];
                                         return Container(
                                           margin: const EdgeInsets.symmetric(horizontal: 5),
-                                          padding: const EdgeInsets.all(20),
+                                          padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
                                             gradient: LinearGradient(
                                               colors: promo['colors'] as List<Color>,
@@ -411,22 +411,26 @@ class _HomePageState extends State<HomePage> {
                                                     Text(
                                                       promo['title'] as String,
                                                       style: const TextStyle(
-                                                        fontSize: 24,
+                                                        fontSize: 22,
                                                         fontWeight: FontWeight.bold,
                                                         color: Colors.white,
                                                       ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
                                                     ),
                                                     const SizedBox(height: 4),
                                                     Text(
                                                       promo['subtitle'] as String,
                                                       style: const TextStyle(
-                                                        fontSize: 12,
+                                                        fontSize: 11,
                                                         color: Colors.white,
                                                       ),
+                                                      maxLines: 2,
+                                                      overflow: TextOverflow.ellipsis,
                                                     ),
-                                                    const SizedBox(height: 12),
+                                                    const SizedBox(height: 10),
                                                     Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                                       decoration: BoxDecoration(
                                                         color: Colors.white,
                                                         borderRadius: BorderRadius.circular(20),
@@ -434,7 +438,7 @@ class _HomePageState extends State<HomePage> {
                                                       child: Text(
                                                         'Shop Now',
                                                         style: TextStyle(
-                                                          fontSize: 12,
+                                                          fontSize: 11,
                                                           fontWeight: FontWeight.bold,
                                                           color: (promo['colors'] as List<Color>)[0],
                                                         ),
