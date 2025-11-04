@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'dart:convert';
 
+// ignore: unused_import
+import '../pages/add_product_page.dart'; // TAMBAHKAN ini di bagian atas
 import '../providers/auth_provider.dart';
 import '../providers/bouquet_provider.dart';
 import '../services/firebase_service.dart';
@@ -185,227 +187,11 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
   }
 
   void _showAddProductDialog(BuildContext context, String sellerId) {
-    final nameController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final priceController = TextEditingController();
-    final categoryController = TextEditingController();
-    final detailsController = TextEditingController();
-    final estimationController = TextEditingController();
-    List<XFile> selectedImages = [];
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Tambah Produk Baru'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Gambar Produk (Maks. 3)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ...selectedImages.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final image = entry.value;
-                      return Stack(
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFFF6B9D), width: 2),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.file(File(image.path), fit: BoxFit.cover),
-                            ),
-                          ),
-                          Positioned(
-                            top: -8,
-                            right: -8,
-                            child: IconButton(
-                              icon: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.close, size: 12, color: Colors.white),
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  selectedImages.removeAt(index);
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
-                    if (selectedImages.length < 3)
-                      GestureDetector(
-                        onTap: () async {
-                          final ImagePicker picker = ImagePicker();
-                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                          if (image != null) {
-                            setState(() {
-                              selectedImages.add(image);
-                            });
-                          }
-                        },
-                        child: DottedBorder(
-                          color: const Color(0xFFFF6B9D),
-                          strokeWidth: 2,
-                          dashPattern: [6, 3],
-                          borderType: BorderType.RRect,
-                          radius: const Radius.circular(12),
-                          child: Container(
-                            width: 80,
-                            height: 80,
-                            color: const Color(0xFFFFE8F0),
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_photo_alternate, size: 24, color: Color(0xFFFF6B9D)),
-                                SizedBox(height: 4),
-                                Text('Tambah', style: TextStyle(fontSize: 10, color: Color(0xFFFF6B9D))),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Nama Produk',
-                    prefixIcon: const Icon(Icons.local_florist, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: descriptionController,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: 'Deskripsi Singkat',
-                    prefixIcon: const Icon(Icons.description, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Harga (Rp)',
-                    prefixIcon: const Icon(Icons.money, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: categoryController,
-                  decoration: InputDecoration(
-                    labelText: 'Kategori',
-                    prefixIcon: const Icon(Icons.category, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: estimationController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Estimasi Pembuatan (Hari) - Opsional',
-                    hintText: 'Kosongkan jika ready stock',
-                    prefixIcon: const Icon(Icons.schedule, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: detailsController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Detail Produk',
-                    prefixIcon: const Icon(Icons.note, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameController.text.isEmpty || priceController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Nama dan Harga tidak boleh kosong'), backgroundColor: Colors.red),
-                  );
-                  return;
-                }
-
-                if (selectedImages.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Pilih minimal 1 gambar'), backgroundColor: Colors.red),
-                  );
-                  return;
-                }
-
-                try {
-                  List<String> imageBase64List = [];
-                  for (var image in selectedImages) {
-                    final bytes = await image.readAsBytes();
-                    imageBase64List.add(base64Encode(bytes));
-                  }
-
-                  final estimationDays = estimationController.text.isEmpty 
-                      ? 0 
-                      : (int.tryParse(estimationController.text) ?? 0);
-
-                  final newBouquet = Bouquet(
-                    id: '',
-                    name: nameController.text,
-                    description: descriptionController.text,
-                    price: int.parse(priceController.text),
-                    images: imageBase64List,
-                    category: categoryController.text.isNotEmpty ? categoryController.text : 'Bunga',
-                    details: detailsController.text,
-                    sellerId: sellerId,
-                    estimationDays: estimationDays,
-                  );
-
-                  final service = FirebaseService();
-                  await service.addBouquet(newBouquet);
-
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Produk berhasil ditambahkan!'), backgroundColor: Color(0xFFFF6B9D)),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B9D)),
-              child: const Text('Tambahkan', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
+    // NAVIGASI KE HALAMAN FULL SCREEN
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddProductPage(sellerId: sellerId),
       ),
     );
   }
@@ -450,6 +236,262 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
             child: const Text('Hapus', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Halaman Tambah Produk Fullscreen
+class AddProductPage extends StatefulWidget {
+  final String sellerId;
+
+  const AddProductPage({super.key, required this.sellerId});
+
+  @override
+  State<AddProductPage> createState() => _AddProductPageState();
+}
+
+class _AddProductPageState extends State<AddProductPage> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _categoryController = TextEditingController();
+  final TextEditingController _detailsController = TextEditingController();
+  final TextEditingController _estimationController = TextEditingController();
+  List<XFile> selectedImages = [];
+  bool _isLoading = false;
+
+  Future<void> _addProduct() async {
+    if (_nameController.text.isEmpty || _priceController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama dan Harga tidak boleh kosong'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (selectedImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih minimal 1 gambar'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      List<String> imageBase64List = [];
+      for (var image in selectedImages) {
+        final bytes = await image.readAsBytes();
+        imageBase64List.add(base64Encode(bytes));
+      }
+
+      final estimationDays = _estimationController.text.isEmpty 
+          ? 0 
+          : (int.tryParse(_estimationController.text) ?? 0);
+
+      final newBouquet = Bouquet(
+        id: '',
+        name: _nameController.text,
+        description: _descriptionController.text,
+        price: int.parse(_priceController.text),
+        images: imageBase64List,
+        category: _categoryController.text.isNotEmpty ? _categoryController.text : 'Bunga',
+        details: _detailsController.text,
+        sellerId: widget.sellerId,
+        estimationDays: estimationDays,
+      );
+
+      final service = FirebaseService();
+      await service.addBouquet(newBouquet);
+
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Produk berhasil ditambahkan!'), backgroundColor: Color(0xFFFF6B9D)),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFA),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text('Tambah Produk Baru', style: TextStyle(color: Color(0xFF2D3142), fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Color(0xFF2D3142)),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Gambar Produk (Maks. 3)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ...selectedImages.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final image = entry.value;
+                  return Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFF6B9D), width: 2),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.file(File(image.path), fit: BoxFit.cover),
+                        ),
+                      ),
+                      Positioned(
+                        top: -8,
+                        right: -8,
+                        child: IconButton(
+                          icon: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close, size: 12, color: Colors.white),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              selectedImages.removeAt(index);
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+                if (selectedImages.length < 3)
+                  GestureDetector(
+                    onTap: () async {
+                      final ImagePicker picker = ImagePicker();
+                      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                      if (image != null) {
+                        setState(() {
+                          selectedImages.add(image);
+                        });
+                      }
+                    },
+                    child: DottedBorder(
+                      color: const Color(0xFFFF6B9D),
+                      strokeWidth: 2,
+                      dashPattern: [6, 3],
+                      borderType: BorderType.RRect,
+                      radius: const Radius.circular(12),
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        color: const Color(0xFFFFE8F0),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_photo_alternate, size: 30, color: Color(0xFFFF6B9D)),
+                            SizedBox(height: 4),
+                            Text('Tambah', style: TextStyle(fontSize: 11, color: Color(0xFFFF6B9D))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'Nama Produk',
+                prefixIcon: const Icon(Icons.local_florist, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _descriptionController,
+              maxLines: 2,
+              decoration: InputDecoration(
+                labelText: 'Deskripsi Singkat',
+                prefixIcon: const Icon(Icons.description, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _priceController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Harga (Rp)',
+                prefixIcon: const Icon(Icons.money, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _categoryController,
+              decoration: InputDecoration(
+                labelText: 'Kategori',
+                prefixIcon: const Icon(Icons.category, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _estimationController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Estimasi Pembuatan (Hari) - Opsional',
+                hintText: 'Kosongkan jika ready stock',
+                prefixIcon: const Icon(Icons.schedule, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _detailsController,
+              maxLines: 4,
+              decoration: InputDecoration(
+                labelText: 'Detail Produk',
+                prefixIcon: const Icon(Icons.note, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _addProduct,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF6B9D),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text('Tambahkan Produk', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

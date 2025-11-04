@@ -5,9 +5,12 @@ import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/helpers.dart';
+// ignore: unused_import
 import '../services/firebase_service.dart'; 
+// ignore: unused_import
 import '../widgets/order_confirmation_dialog.dart';
 import 'main_navigation.dart';
+import 'checkout_page.dart'; // IMPORT HALAMAN CHECKOUT BARU
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -19,59 +22,20 @@ class CartPage extends StatefulWidget {
 class _CartPageState extends State<CartPage> {
   Map<String, bool> selectedItems = {};
 
+  // FUNGSI YANG SUDAH DIGANTI - NAVIGASI KE HALAMAN CHECKOUT
   void _showOrderConfirmationDialog(List<CartItem> items, int total, CartProvider cart) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     
-    showDialog(
-      context: context,
-      builder: (context) => OrderConfirmationDialog(
-        items: items,
-        total: total,
-        auth: auth,
-        onConfirm: (phone, address, city, postalCode, paymentMethod) async {
-          if (phone.isNotEmpty) {
-            await auth.updateProfile(
-              auth.user?.displayName ?? 'User',
-              phone,
-              address,
-              auth.city,
-              auth.postalCode,
-              paymentMethod
-            );
-          }
-          
-          final service = FirebaseService();
-          try {
-            await service.placeOrder(
-              auth.user!.uid, 
-              items, 
-              total.toDouble(),
-              paymentMethod  
-            );
-            
-            for (var item in items) {
-              await cart.removeItem(item.bouquet.id);
-            }
-            
-            Navigator.popUntil(context, (route) => route.isFirst);
-            
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Pesanan berhasil dibuat!'),
-                backgroundColor: Color(0xFFFF6B9D),
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          } catch (e) {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: $e'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
+    // NAVIGASI KE HALAMAN FULL SCREEN
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutPage(
+          items: items,
+          total: total,
+          auth: auth,
+          cart: cart,
+        ),
       ),
     );
   }

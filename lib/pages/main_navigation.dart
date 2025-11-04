@@ -54,14 +54,15 @@ class _MainNavigationState extends State<MainNavigation> {
 
     return Scaffold(
       body: pages[_selectedIndex],
-      floatingActionButton: !isSeller ? FloatingActionButton(
+      // FAB hanya ditampilkan di Home Page (index 0) untuk buyer
+      floatingActionButton: !isSeller && _selectedIndex == 0 ? FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const CustomOrderPage()),
           );
         },
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: const Color(0xFFFF6B9D), // PINK
         child: const Icon(Icons.auto_awesome, color: Colors.white),
       ) : null,
       bottomNavigationBar: Container(
@@ -75,16 +76,6 @@ class _MainNavigationState extends State<MainNavigation> {
           child: BottomNavigationBar(
             currentIndex: _selectedIndex,
             onTap: (index) {
-              // Handle chat admin untuk buyer
-              if (!isSeller && index == 4) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Fitur chat dengan admin akan segera hadir!'),
-                    backgroundColor: Color(0xFFFF6B9D),
-                  ),
-                );
-                return;
-              }
               setState(() => _selectedIndex = index);
             },
             type: BottomNavigationBarType.fixed,
@@ -107,7 +98,6 @@ class _MainNavigationState extends State<MainNavigation> {
                     BottomNavigationBarItem(icon: Icon(Icons.receipt_long_rounded, size: 28), label: ''),
                     BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_rounded, size: 28), label: ''),
                     BottomNavigationBarItem(icon: Icon(Icons.person_rounded, size: 28), label: ''),
-                    BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_rounded, size: 28), label: ''),
                   ],
           ),
         ),

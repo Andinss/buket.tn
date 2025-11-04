@@ -20,7 +20,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 6, vsync: this); // UBAH dari 5 ke 6
   }
 
   @override
@@ -57,6 +57,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> with SingleTickerPr
               Tab(text: 'Dikemas'),
               Tab(text: 'Dikirim'),
               Tab(text: 'Selesai'),
+              Tab(text: 'Custom'), // TAMBAHKAN TAB INI
             ],
           ),
         ),
@@ -114,7 +115,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage> with SingleTickerPr
                 _buildSellerOrdersList(processingOrders, 'Tidak ada pesanan yang dikemas'),
                 _buildSellerOrdersList(shippedOrders, 'Tidak ada pesanan yang dikirim'),
                 _buildSellerOrdersList(completedOrders, 'Tidak ada pesanan yang selesai'),
-                const SellerCustomOrdersPage(), // TAB BARU
+                const SellerCustomOrdersPage(), // TAMBAHKAN TAB INI
               ],
             );
           } catch (e) {

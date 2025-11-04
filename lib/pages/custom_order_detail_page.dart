@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/custom_order.dart';
 import '../utils/helpers.dart';
+import '../pages/order_chat_page.dart';
+import '../models/order.dart';
 
 class CustomOrderDetailPage extends StatelessWidget {
   final CustomOrder order;
@@ -67,7 +69,7 @@ class CustomOrderDetailPage extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                  colors: [Color(0xFFFF6B9D), Color(0xFFFF8FAB)],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -151,7 +153,7 @@ class CustomOrderDetailPage extends StatelessWidget {
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.info_outline, color: Color(0xFF6366F1), size: 20),
+                      Icon(Icons.info_outline, color: Color(0xFFFF6B9D), size: 20),
                       SizedBox(width: 8),
                       Text(
                         'Detail Pesanan',
@@ -229,7 +231,7 @@ class CustomOrderDetailPage extends StatelessWidget {
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.note, color: Color(0xFF6366F1), size: 20),
+                        Icon(Icons.note, color: Color(0xFFFF6B9D), size: 20),
                         SizedBox(width: 8),
                         Text(
                           'Catatan Tambahan',
@@ -283,7 +285,7 @@ class CustomOrderDetailPage extends StatelessWidget {
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.location_on, color: Color(0xFF6366F1), size: 20),
+                      Icon(Icons.location_on, color: Color(0xFFFF6B9D), size: 20),
                       SizedBox(width: 8),
                       Text(
                         'Alamat Pengiriman',
@@ -347,6 +349,50 @@ class CustomOrderDetailPage extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+              ),
+
+            // Tombol Chat dengan Penjual
+            if (order.customOrderId != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      // Buat dummy order untuk chat
+                      final dummyOrder = Order(
+                        id: order.customOrderId!,
+                        buyerId: order.buyerId,
+                        items: [],
+                        total: order.budget.toDouble(),
+                        status: 'placed',
+                        createdAt: order.createdAt,
+                        isCustomOrder: true,
+                        customOrderId: order.id,
+                      );
+                      
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OrderChatPage(order: dummyOrder),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                    label: const Text(
+                      'Chat dengan Penjual',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFFF6B9D),
+                      side: const BorderSide(color: Color(0xFFFF6B9D), width: 2),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
                 ),
               ),
 

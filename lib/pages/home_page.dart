@@ -1,4 +1,5 @@
 import 'package:buket_tn/models/bouquet.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,7 +10,6 @@ import '../providers/favorite_provider.dart';
 import '../utils/helpers.dart';
 import 'favorite_page.dart';
 import 'detail_page.dart';
-// ignore: unused_import
 import 'custom_order_page.dart';
 import 'main_navigation.dart';
 
@@ -130,6 +130,9 @@ class _HomePageState extends State<HomePage> {
       
       return matchesSearch && matchesColor;
     }).toList();
+
+    // Cek apakah user adalah seller
+    final isSeller = auth.user?.role == 'seller';
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
@@ -433,6 +436,17 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
+      // Floating Action Button untuk Custom Order (hanya untuk non-seller)
+      floatingActionButton: !isSeller ? FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CustomOrderPage()),
+          );
+        },
+        backgroundColor: const Color(0xFFFF6B9D),
+        child: const Icon(Icons.auto_awesome, color: Colors.white),
+      ) : null,
     );
   }
 
@@ -616,4 +630,8 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+}
+
+extension on User? {
+  get role => null;
 }

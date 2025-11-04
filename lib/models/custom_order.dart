@@ -18,6 +18,8 @@ class CustomOrder {
   final String? rejectionReason;
   final int? finalPrice;
 
+  var customOrderId;
+
   CustomOrder({
     required this.id,
     required this.buyerId,
