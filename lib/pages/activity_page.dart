@@ -282,7 +282,7 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF6366F1), width: 2),
+          border: Border.all(color: const Color(0xFFFF6B9D), width: 2),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
         ),
         child: Column(
