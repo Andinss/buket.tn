@@ -6,7 +6,9 @@ import '../services/firebase_service.dart';
 import '../models/order.dart';
 import '../utils/helpers.dart';
 import 'main_navigation.dart';
+// ignore: unused_import
 import 'order_chat_page.dart';
+import 'order_detail_full_page.dart';
 
 class ActivityPage extends StatefulWidget {
   const ActivityPage({super.key});
@@ -216,6 +218,9 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
+          border: order.isCustomOrder 
+              ? Border.all(color: const Color(0xFF6366F1), width: 2)
+              : null,
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
         ),
         child: Column(
@@ -228,7 +233,39 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Order #${order.id.substring(0, 8).toUpperCase()}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
+                      Row(
+                        children: [
+                          Text('Order #${order.id.substring(0, 8).toUpperCase()}', 
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2D3142))),
+                          if (order.isCustomOrder) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.auto_awesome, size: 10, color: Colors.white),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'CUSTOM',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year} ${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')}',
@@ -250,7 +287,37 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            
+            // Payment Status
+            Row(
+              children: [
+                Icon(
+                  order.isPaid ? Icons.check_circle : Icons.pending,
+                  size: 14,
+                  color: order.isPaid ? const Color(0xFF16A34A) : const Color(0xFFC78500),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  order.isPaid ? 'Sudah Dibayar' : 'Belum Dibayar',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: order.isPaid ? const Color(0xFF16A34A) : const Color(0xFFC78500),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '• ${order.paymentMethod}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(12)),
@@ -301,265 +368,15 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
   }
 
   void _showOrderDetailDialog(Order order) {
-    final statusColor = getStatusColor(order.status);
-    final statusTextColor = getStatusTextColor(order.status);
-    final statusLabel = getStatusLabel(order.status);
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        insetPadding: const EdgeInsets.all(20),
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxHeight: 700),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.receipt_long, color: Color(0xFFFF6B9D), size: 24),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Detail Pesanan',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2D3142),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        statusLabel,
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: statusTextColor),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildDetailSection(
-                        title: 'Informasi Pesanan',
-                        children: [
-                          _buildDetailRow('ID Pesanan', '${order.id.substring(0, 8).toUpperCase()}'),
-                          _buildDetailRow('Tanggal', '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year}'),
-                          _buildDetailRow('Waktu', '${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')}'),
-                          _buildDetailRow('Status', statusLabel),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Payment Information Section
-                      _buildDetailSection(
-                        title: 'Informasi Pembayaran',
-                        children: [
-                          _buildDetailRow('Metode Pembayaran', order.paymentMethod),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Status Pembayaran',
-                                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: order.isPaid 
-                                      ? const Color(0xFFDCFCE7) 
-                                      : const Color(0xFFFEE2E2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      order.isPaid ? Icons.check_circle : Icons.pending,
-                                      size: 14,
-                                      color: order.isPaid 
-                                          ? const Color(0xFF16A34A) 
-                                          : const Color(0xFFDC2626),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      order.isPaid ? 'Sudah Dibayar' : 'Belum Dibayar',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: order.isPaid 
-                                            ? const Color(0xFF16A34A) 
-                                            : const Color(0xFFDC2626),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      _buildDetailSection(
-                        title: 'Item Pesanan',
-                        children: [
-                          ...order.items.map((item) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item['name']?.toString() ?? 'Unknown Item',
-                                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                                      ),
-                                      Text(
-                                        '${item['qty']} × ${formatRupiah(item['price'])}',
-                                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Text(
-                                  formatRupiah((item['price'] ?? 0) * (item['qty'] ?? 1)),
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          )),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF0F5),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Total Pembayaran',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2D3142),
-                              ),
-                            ),
-                            Text(
-                              formatRupiah(order.total.toInt()),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFFF6B9D),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Chat Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => OrderChatPage(order: order),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                          label: Text(
-                            auth.role == 'seller' ? 'Chat dengan Pembeli' : 'Chat dengan Penjual',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFFF6B9D),
-                            side: const BorderSide(color: Color(0xFFFF6B9D), width: 2),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, -5),
-                    ),
-                  ],
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6B9D),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Tutup', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OrderDetailFullPage(order: order, isSeller: false),
       ),
     );
   }
 
+  // ignore: unused_element
   Widget _buildDetailSection({required String title, required List<Widget> children}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -587,6 +404,7 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
     );
   }
 
+  // ignore: unused_element
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

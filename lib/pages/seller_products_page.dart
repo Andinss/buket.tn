@@ -66,102 +66,117 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
                 final product = sellerProducts[index];
                 final isAdminProduct = product.sellerId == 'admin';
                 
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 15),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
-                    border: isAdminProduct ? Border.all(color: Colors.orange, width: 1) : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: const Color(0xFFFFE8F0),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: product.images.isNotEmpty 
-                              ? buildProductImage(product.images[0])
-                              : const Icon(Icons.image, color: Color(0xFFFF6B9D)),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                return GestureDetector(
+                  onTap: () => _showEditProductPage(context, product),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 15),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
+                      border: isAdminProduct ? Border.all(color: Colors.orange, width: 1) : null,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(product.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                ),
-                                if (isAdminProduct)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(color: Colors.orange.shade100, borderRadius: BorderRadius.circular(8)),
-                                    child: const Text('Sample', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange)),
-                                  ),
-                              ],
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: const Color(0xFFFFE8F0),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: product.images.isNotEmpty 
+                                    ? buildProductImage(product.images[0])
+                                    : const Icon(Icons.image, color: Color(0xFFFF6B9D)),
+                              ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(formatRupiah(product.price), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D))),
-                            const SizedBox(height: 4),
-                              Row(
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(product.category, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: product.estimationDays == 0 
-                                          ? const Color(0xFFDCFCE7) 
-                                          : const Color(0xFFFEF3C7),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      product.estimationText,
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                        color: product.estimationDays == 0 
-                                            ? const Color(0xFF16A34A) 
-                                            : const Color(0xFFC78500),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          product.name, 
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                          maxLines: 1, 
+                                          overflow: TextOverflow.ellipsis
+                                        ),
+                                      ),
+                                      if (isAdminProduct)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(color: Colors.orange.shade100, borderRadius: BorderRadius.circular(8)),
+                                          child: const Text('Sample', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange)),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(formatRupiah(product.price), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D))),
+                                  const SizedBox(height: 6),
+                                  Text(product.category, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                  const SizedBox(height: 4),
+                                  if (product.estimationDays > 0)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFEF3C7),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        product.estimationText,
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFFC78500),
+                                        ),
                                       ),
                                     ),
-                                  ),
                                 ],
                               ),
+                            ),
                           ],
                         ),
-                      ),
-                      Column(
-                        children: [
-                          GestureDetector(
-                            onTap: () => _showEditProductDialog(context, product),
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(color: const Color(0xFFFFE8F0), borderRadius: BorderRadius.circular(8)),
-                              child: const Icon(Icons.edit, size: 18, color: Color(0xFFFF6B9D)),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _showEditProductPage(context, product),
+                                icon: const Icon(Icons.edit, size: 16),
+                                label: const Text('Edit'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFFFF6B9D),
+                                  side: const BorderSide(color: Color(0xFFFF6B9D)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          GestureDetector(
-                            onTap: () => _showDeleteProductDialog(context, product.id),
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(color: Colors.red.shade100, borderRadius: BorderRadius.circular(8)),
-                              child: Icon(Icons.delete, size: 18, color: Colors.red.shade600),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _showDeleteProductDialog(context, product.id),
+                                icon: const Icon(Icons.delete, size: 16),
+                                label: const Text('Hapus'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(color: Colors.red),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -175,7 +190,7 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
     final priceController = TextEditingController();
     final categoryController = TextEditingController();
     final detailsController = TextEditingController();
-    final estimationController = TextEditingController(text: '1');
+    final estimationController = TextEditingController();
     List<XFile> selectedImages = [];
 
     showDialog(
@@ -310,8 +325,8 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
                   controller: estimationController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Estimasi Pembuatan (Hari)',
-                    hintText: '0 = Ready Stock, 1+ = Pre-order',
+                    labelText: 'Estimasi Pembuatan (Hari) - Opsional',
+                    hintText: 'Kosongkan jika ready stock',
                     prefixIcon: const Icon(Icons.schedule, color: Color(0xFFFF6B9D)),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -357,6 +372,10 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
                     imageBase64List.add(base64Encode(bytes));
                   }
 
+                  final estimationDays = estimationController.text.isEmpty 
+                      ? 0 
+                      : (int.tryParse(estimationController.text) ?? 0);
+
                   final newBouquet = Bouquet(
                     id: '',
                     name: nameController.text,
@@ -366,7 +385,7 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
                     category: categoryController.text.isNotEmpty ? categoryController.text : 'Bunga',
                     details: detailsController.text,
                     sellerId: sellerId,
-                    estimationDays: int.tryParse(estimationController.text) ?? 1,
+                    estimationDays: estimationDays,
                   );
 
                   final service = FirebaseService();
@@ -391,266 +410,11 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
     );
   }
 
-  void _showEditProductDialog(BuildContext context, Bouquet product) {
-    final nameController = TextEditingController(text: product.name);
-    final descriptionController = TextEditingController(text: product.description);
-    final priceController = TextEditingController(text: product.price.toString());
-    final categoryController = TextEditingController(text: product.category);
-    final detailsController = TextEditingController(text: product.details);
-    final estimationController = TextEditingController(text: product.estimationDays.toString());
-    List<XFile> newImages = [];
-    List<String> existingImages = List.from(product.images);
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Edit Produk'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Gambar Produk (Maks. 3)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ...existingImages.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final imageData = entry.value;
-                      return Stack(
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFFF6B9D), width: 2),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: buildProductImage(imageData),
-                            ),
-                          ),
-                          Positioned(
-                            top: -8,
-                            right: -8,
-                            child: IconButton(
-                              icon: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.close, size: 12, color: Colors.white),
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  existingImages.removeAt(index);
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
-
-                    ...newImages.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final image = entry.value;
-                      return Stack(
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFFF6B9D), width: 2),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.file(File(image.path), fit: BoxFit.cover),
-                            ),
-                          ),
-                          Positioned(
-                            top: -8,
-                            right: -8,
-                            child: IconButton(
-                              icon: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.close, size: 12, color: Colors.white),
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  newImages.removeAt(index);
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
-                    if (existingImages.length + newImages.length < 3)
-                      GestureDetector(
-                        onTap: () async {
-                          final ImagePicker picker = ImagePicker();
-                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                          if (image != null) {
-                            setState(() {
-                              newImages.add(image);
-                            });
-                          }
-                        },
-                        child: DottedBorder(
-                          color: const Color(0xFFFF6B9D),
-                          strokeWidth: 2,
-                          dashPattern: [6, 3], // panjang garis, jarak antar putus-putus
-                          borderType: BorderType.RRect,
-                          radius: const Radius.circular(12),
-                          child: Container(
-                            width: 80,
-                            height: 80,
-                            color: const Color(0xFFFFE8F0),
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_photo_alternate, size: 24, color: Color(0xFFFF6B9D)),
-                                SizedBox(height: 4),
-                                Text('Tambah', style: TextStyle(fontSize: 10, color: Color(0xFFFF6B9D))),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Nama Produk',
-                    prefixIcon: const Icon(Icons.local_florist, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: descriptionController,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: 'Deskripsi Singkat',
-                    prefixIcon: const Icon(Icons.description, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Harga (Rp)',
-                    prefixIcon: const Icon(Icons.money, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: categoryController,
-                  decoration: InputDecoration(
-                    labelText: 'Kategori',
-                    prefixIcon: const Icon(Icons.category, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: estimationController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Estimasi Pembuatan (Hari)',
-                    hintText: '0 = Ready Stock, 1+ = Pre-order',
-                    prefixIcon: const Icon(Icons.schedule, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: detailsController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Detail Produk',
-                    prefixIcon: const Icon(Icons.note, color: Color(0xFFFF6B9D)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameController.text.isEmpty || priceController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Nama dan Harga tidak boleh kosong'), backgroundColor: Colors.red),
-                  );
-                  return;
-                }
-
-                if (existingImages.isEmpty && newImages.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Minimal 1 gambar diperlukan'), backgroundColor: Colors.red),
-                  );
-                  return;
-                }
-                
-                try {
-                  List<String> allImages = List.from(existingImages);
-                  
-                  for (var image in newImages) {
-                    final bytes = await image.readAsBytes();
-                    allImages.add(base64Encode(bytes));
-                  }
-
-                  final updatedBouquet = Bouquet(
-                    id: product.id,
-                    name: nameController.text,
-                    description: descriptionController.text,
-                    price: int.parse(priceController.text),
-                    images: allImages,
-                    category: categoryController.text.isNotEmpty ? categoryController.text : 'Bunga',
-                    details: detailsController.text,
-                    sellerId: product.sellerId,
-                    estimationDays: int.tryParse(estimationController.text) ?? 1,
-                  );
-
-                  final service = FirebaseService();
-                  await service.updateBouquet(product.id, updatedBouquet);
-
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Produk berhasil diperbarui!'), backgroundColor: Color(0xFFFF6B9D)),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B9D)),
-              child: const Text('Perbarui', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
+  void _showEditProductPage(BuildContext context, Bouquet product) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProductPage(product: product),
       ),
     );
   }
@@ -686,6 +450,328 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
             child: const Text('Hapus', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Halaman Edit Produk Fullscreen
+class EditProductPage extends StatefulWidget {
+  final Bouquet product;
+
+  const EditProductPage({super.key, required this.product});
+
+  @override
+  State<EditProductPage> createState() => _EditProductPageState();
+}
+
+class _EditProductPageState extends State<EditProductPage> {
+  late TextEditingController _nameController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _priceController;
+  late TextEditingController _categoryController;
+  late TextEditingController _detailsController;
+  late TextEditingController _estimationController;
+  List<XFile> newImages = [];
+  List<String> existingImages = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.product.name);
+    _descriptionController = TextEditingController(text: widget.product.description);
+    _priceController = TextEditingController(text: widget.product.price.toString());
+    _categoryController = TextEditingController(text: widget.product.category);
+    _detailsController = TextEditingController(text: widget.product.details);
+    _estimationController = TextEditingController(
+      text: widget.product.estimationDays > 0 ? widget.product.estimationDays.toString() : ''
+    );
+    existingImages = List.from(widget.product.images);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    _priceController.dispose();
+    _categoryController.dispose();
+    _detailsController.dispose();
+    _estimationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveProduct() async {
+    if (_nameController.text.isEmpty || _priceController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama dan Harga tidak boleh kosong'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (existingImages.isEmpty && newImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Minimal 1 gambar diperlukan'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      List<String> allImages = List.from(existingImages);
+
+      for (var image in newImages) {
+        final bytes = await image.readAsBytes();
+        allImages.add(base64Encode(bytes));
+      }
+
+      final estimationDays = _estimationController.text.isEmpty 
+          ? 0 
+          : (int.tryParse(_estimationController.text) ?? 0);
+
+      final updatedBouquet = Bouquet(
+        id: widget.product.id,
+        name: _nameController.text,
+        description: _descriptionController.text,
+        price: int.parse(_priceController.text),
+        images: allImages,
+        category: _categoryController.text.isNotEmpty ? _categoryController.text : 'Bunga',
+        details: _detailsController.text,
+        sellerId: widget.product.sellerId,
+        estimationDays: estimationDays,
+      );
+
+      final service = FirebaseService();
+      await service.updateBouquet(widget.product.id, updatedBouquet);
+
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Produk berhasil diperbarui!'), backgroundColor: Color(0xFFFF6B9D)),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFA),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text('Edit Produk', style: TextStyle(color: Color(0xFF2D3142), fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Color(0xFF2D3142)),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Gambar Produk (Maks. 3)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ...existingImages.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final imageData = entry.value;
+                  return Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFF6B9D), width: 2),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: buildProductImage(imageData),
+                        ),
+                      ),
+                      Positioned(
+                        top: -8,
+                        right: -8,
+                        child: IconButton(
+                          icon: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close, size: 12, color: Colors.white),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              existingImages.removeAt(index);
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+                ...newImages.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final image = entry.value;
+                  return Stack(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFF6B9D), width: 2),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.file(File(image.path), fit: BoxFit.cover),
+                        ),
+                      ),
+                      Positioned(
+                        top: -8,
+                        right: -8,
+                        child: IconButton(
+                          icon: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close, size: 12, color: Colors.white),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              newImages.removeAt(index);
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+                if (existingImages.length + newImages.length < 3)
+                  GestureDetector(
+                    onTap: () async {
+                      final ImagePicker picker = ImagePicker();
+                      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                      if (image != null) {
+                        setState(() {
+                          newImages.add(image);
+                        });
+                      }
+                    },
+                    child: DottedBorder(
+                      color: const Color(0xFFFF6B9D),
+                      strokeWidth: 2,
+                      dashPattern: [6, 3],
+                      borderType: BorderType.RRect,
+                      radius: const Radius.circular(12),
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        color: const Color(0xFFFFE8F0),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_photo_alternate, size: 30, color: Color(0xFFFF6B9D)),
+                            SizedBox(height: 4),
+                            Text('Tambah', style: TextStyle(fontSize: 11, color: Color(0xFFFF6B9D))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'Nama Produk',
+                prefixIcon: const Icon(Icons.local_florist, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _descriptionController,
+              maxLines: 2,
+              decoration: InputDecoration(
+                labelText: 'Deskripsi Singkat',
+                prefixIcon: const Icon(Icons.description, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _priceController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Harga (Rp)',
+                prefixIcon: const Icon(Icons.money, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _categoryController,
+              decoration: InputDecoration(
+                labelText: 'Kategori',
+                prefixIcon: const Icon(Icons.category, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _estimationController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Estimasi Pembuatan (Hari) - Opsional',
+                hintText: 'Kosongkan jika ready stock',
+                prefixIcon: const Icon(Icons.schedule, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _detailsController,
+              maxLines: 4,
+              decoration: InputDecoration(
+                labelText: 'Detail Produk',
+                prefixIcon: const Icon(Icons.note, color: Color(0xFFFF6B9D)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _saveProduct,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF6B9D),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text('Simpan Perubahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -180,95 +180,181 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             
+            // Search Bar dengan Filter
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: Colors.grey, size: 24),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        focusNode: _searchFocusNode,
-                        onChanged: (value) => setState(() => searchQuery = value),
-                        decoration: const InputDecoration(
-                          hintText: 'Cari bunga atau warna...',
-                          border: InputBorder.none,
-                          hintStyle: TextStyle(color: Colors.grey),
-                        ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.search, color: Colors.grey, size: 24),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              focusNode: _searchFocusNode,
+                              onChanged: (value) => setState(() => searchQuery = value),
+                              decoration: const InputDecoration(
+                                hintText: 'Cari bunga...',
+                                border: InputBorder.none,
+                                hintStyle: TextStyle(color: Colors.grey),
+                              ),
+                            ),
+                          ),
+                          if (searchQuery.isNotEmpty)
+                            GestureDetector(
+                              onTap: () {
+                                _searchController.clear();
+                                _searchFocusNode.unfocus();
+                                setState(() => searchQuery = '');
+                              },
+                              child: const Icon(Icons.close, color: Colors.grey, size: 20),
+                            )
+                          else
+                            PopupMenuButton<String>(
+                              icon: const Icon(Icons.filter_list, color: Color(0xFFFF6B9D)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              onSelected: (value) {
+                                setState(() => selectedColor = value);
+                              },
+                              itemBuilder: (context) => _colorFilters.map((color) {
+                                return PopupMenuItem<String>(
+                                  value: color,
+                                  child: Row(
+                                    children: [
+                                      if (color != 'Semua')
+                                        Container(
+                                          width: 16,
+                                          height: 16,
+                                          margin: const EdgeInsets.only(right: 8),
+                                          decoration: BoxDecoration(
+                                            color: _getColorFromName(color),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: Colors.grey, width: 1),
+                                          ),
+                                        ),
+                                      Text(color),
+                                      if (selectedColor == color)
+                                        const Padding(
+                                          padding: EdgeInsets.only(left: 8),
+                                          child: Icon(Icons.check, size: 16, color: Color(0xFFFF6B9D)),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                        ],
                       ),
                     ),
-                    if (searchQuery.isNotEmpty)
-                      GestureDetector(
-                        onTap: () {
-                          _searchController.clear();
-                          _searchFocusNode.unfocus();
-                          setState(() => searchQuery = '');
-                        },
-                        child: const Icon(Icons.close, color: Colors.grey, size: 20),
-                      ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
+            
             const SizedBox(height: 16),
 
-            // Filter Warna
+            // Quick Actions: Chat & Custom Bouquet
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _colorFilters.map((color) {
-                    final isSelected = selectedColor == color;
-                    return GestureDetector(
-                      onTap: () => setState(() => selectedColor = color),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        // Navigate to chat with admin/seller
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Fitur chat dengan admin akan segera hadir!'),
+                            backgroundColor: Color(0xFFFF6B9D),
+                          ),
+                        );
+                      },
                       child: Container(
-                        margin: const EdgeInsets.only(right: 10),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFFF6B9D) : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, 3))],
-                          border: isSelected ? null : Border.all(color: Colors.grey.shade300),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFF6B9D), Color(0xFFFF8FAB)],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF6B9D).withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            if (color != 'Semua')
-                              Container(
-                                width: 12,
-                                height: 12,
-                                margin: const EdgeInsets.only(right: 6),
-                                decoration: BoxDecoration(
-                                  color: _getColorFromName(color),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 1),
-                                ),
-                              ),
+                            Icon(Icons.chat_bubble, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
                             Text(
-                              color,
+                              'Chat Admin',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: isSelected ? Colors.white : Colors.grey.shade700,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const CustomOrderPage()),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF6366F1).withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Custom',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+
             const SizedBox(height: 20),
 
             Expanded(
@@ -431,79 +517,6 @@ class _HomePageState extends State<HomePage> {
                         ),
                         
                         const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                        if (searchQuery.isEmpty && selectedColor == 'Semua')
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                              child: GestureDetector(
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const CustomOrderPage()),
-                                ),
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                                    ),
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF6366F1).withOpacity(0.3),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 5),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.2),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: const Icon(
-                                          Icons.auto_awesome,
-                                          color: Colors.white,
-                                          size: 32,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      const Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Custom Bouquet',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            SizedBox(height: 4),
-                                            Text(
-                                              'Buat bouquet sesuai budget & keinginanmu!',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const Icon(
-                                        Icons.arrow_forward_ios,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
                       ],
                     ),
             ),

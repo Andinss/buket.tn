@@ -96,9 +96,21 @@ class AuthProvider with ChangeNotifier {
     await service.resetPassword(email);
   }
 
-  Future<void> signOut() async {
+Future<void> signOut() async {
+  try {
+    role = '';
+    phoneNumber = '';
+    address = '';
+    city = '';
+    postalCode = '';
+    paymentMethod = 'Credit Card';
     await service.signOut();
+    notifyListeners();
+  } catch (e) {
+    debugPrint('Error signing out: $e');
+    rethrow;
   }
+}
 
   Future<void> setRole(String r) async {
     if (user == null) return;

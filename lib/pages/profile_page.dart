@@ -6,12 +6,14 @@ import '../providers/auth_provider.dart';
 // ignore: unused_import
 import '../providers/address_provider.dart';
 import 'address_list_page.dart';
+// ignore: unused_import
 import 'my_custom_orders_page.dart';
 import 'main_navigation.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
+  // ignore: unused_element
   void _navigateToPage(BuildContext context, int index) {
     Navigator.pushAndRemoveUntil(
       context,
@@ -144,38 +146,6 @@ class ProfilePage extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildMenuTile(
-                      icon: Icons.store_rounded,
-                      title: 'Kelola Produk',
-                      subtitle: 'Tambah, edit, dan hapus produk',
-                      onTap: () => _navigateToPage(context, 0),
-                      color: const Color(0xFFFF6B9D),
-                    ),
-                    const Divider(height: 1),
-                    _buildMenuTile(
-                      icon: Icons.receipt_long_rounded,
-                      title: 'Pesanan Masuk',
-                      subtitle: 'Lihat dan kelola pesanan (termasuk custom)',
-                      onTap: () => _navigateToPage(context, 1),
-                      color: const Color(0xFFFF6B9D),
-                    ),
-                    const Divider(height: 1),
-                    _buildMenuTile(
-                      icon: Icons.chat_bubble_rounded, 
-                      title: 'Chat Pembeli', 
-                      subtitle: 'Komunikasi dengan pembeli', 
-                      onTap: () => _navigateToPage(context, 2),
-                      color: const Color(0xFFFF6B9D),
-                    ),
-                    const Divider(height: 1),
-                    _buildMenuTile(
-                      icon: Icons.trending_up_rounded,
-                      title: 'Analytics & Laporan',
-                      subtitle: 'Lihat statistik penjualan',
-                      onTap: () => _navigateToPage(context, 3),
-                      color: const Color(0xFFFF6B9D),
-                    ),
-                    const Divider(height: 1),
-                    _buildMenuTile(
                       icon: Icons.campaign_rounded,
                       title: 'Kelola Promo',
                       subtitle: 'Atur promo untuk halaman utama',
@@ -217,7 +187,7 @@ class ProfilePage extends StatelessWidget {
                     color: const Color(0xFFDB2777),
                   ),
                   const Divider(height: 1),
-                 _buildMenuTile(
+                  _buildMenuTile(
                     icon: Icons.location_on,
                     title: 'Alamat',
                     subtitle: 'Kelola alamat pengiriman',
@@ -236,17 +206,7 @@ class ProfilePage extends StatelessWidget {
                       onTap: () => _showPaymentDialog(context, auth),
                       color: const Color(0xFFDB2777),
                     ),
-                    const Divider(height: 1),
-                    _buildMenuTile(
-                      icon: Icons.auto_awesome,
-                      title: 'Pesanan Custom',
-                      subtitle: 'Lihat pesanan custom bouquet Anda',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MyCustomOrdersPage()),
-                      ),
-                      color: const Color(0xFFDB2777),
-                    ),
+                  // MENU PESANAN CUSTOM DIHAPUS
                   const Divider(height: 1),
                   _buildMenuTile(
                     icon: Icons.security,
@@ -261,34 +221,6 @@ class ProfilePage extends StatelessWidget {
                     title: 'Notifikasi',
                     subtitle: 'Atur pengaturan notifikasi',
                     onTap: () => _showNotificationSettings(context),
-                    color: const Color(0xFFDB2777),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
-              ),
-              child: Column(
-                children: [
-                  _buildMenuTile(
-                    icon: Icons.help_outline,
-                    title: 'Bantuan & Dukungan',
-                    subtitle: 'Hubungi customer service',
-                    onTap: () => _showHelpDialog(context),
-                    color: const Color(0xFFDB2777),
-                  ),
-                  const Divider(height: 1),
-                  _buildMenuTile(
-                    icon: Icons.info_outline,
-                    title: 'Tentang Kami',
-                    subtitle: 'Informasi tentang aplikasi',
-                    onTap: () => _showAboutDialog(context),
                     color: const Color(0xFFDB2777),
                   ),
                 ],
@@ -946,6 +878,7 @@ class ProfilePage extends StatelessWidget {
       );
     }
 
+    // ignore: unused_element
     void _showHelpDialog(BuildContext context) {
       showDialog(
         context: context,
@@ -983,6 +916,7 @@ class ProfilePage extends StatelessWidget {
       );
     }
 
+    // ignore: unused_element
     void _showAboutDialog(BuildContext context) {
       showDialog(
         context: context,
