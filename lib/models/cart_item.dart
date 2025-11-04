@@ -12,7 +12,6 @@ class CartItem {
 
   int get price => bouquet.price;
 
-  // Convert CartItem to Map for Firebase
   Map<String, dynamic> toMap() {
     return {
       'bouquetId': bouquet.id,
@@ -22,7 +21,6 @@ class CartItem {
     };
   }
 
-  // Create CartItem from Firebase document
   factory CartItem.fromMap(Map<String, dynamic> map, String bouquetId) {
     final bouquetData = map['bouquetData'] as Map<String, dynamic>;
     

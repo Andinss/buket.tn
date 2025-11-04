@@ -5,12 +5,8 @@ import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/helpers.dart';
-// ignore: unused_import
-import '../services/firebase_service.dart'; 
-// ignore: unused_import
-import '../widgets/order_confirmation_dialog.dart';
 import 'main_navigation.dart';
-import 'checkout_page.dart'; // IMPORT HALAMAN CHECKOUT BARU
+import 'checkout_page.dart'; 
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -22,11 +18,9 @@ class CartPage extends StatefulWidget {
 class _CartPageState extends State<CartPage> {
   Map<String, bool> selectedItems = {};
 
-  // FUNGSI YANG SUDAH DIGANTI - NAVIGASI KE HALAMAN CHECKOUT
   void _showOrderConfirmationDialog(List<CartItem> items, int total, CartProvider cart) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     
-    // NAVIGASI KE HALAMAN FULL SCREEN
     Navigator.push(
       context,
       MaterialPageRoute(

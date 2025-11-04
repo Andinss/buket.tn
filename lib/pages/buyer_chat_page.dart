@@ -9,13 +9,12 @@ import '../services/firebase_service.dart';
 class BuyerChatPage extends StatefulWidget {
   final String buyerId;
   final String buyerName;
-  final Order? order; // TAMBAHKAN INI
-
+  final Order? order; 
   const BuyerChatPage({
     super.key,
     required this.buyerId,
     required this.buyerName,
-    this.order, // TAMBAHKAN INI
+    this.order, 
   });
 
   @override
@@ -72,7 +71,7 @@ class _BuyerChatPageState extends State<BuyerChatPage> {
     try {
       final message = ChatMessage(
         id: '',
-        orderId: '', // Tidak perlu order ID karena chat per buyer
+        orderId: '',
         senderId: auth.user!.uid,
         senderName: auth.user!.displayName ?? 'Seller',
         message: _messageController.text.trim(),
@@ -80,14 +79,12 @@ class _BuyerChatPageState extends State<BuyerChatPage> {
         isRead: false,
       );
 
-      // Save to buyer's chat room
       await _service.db
           .collection('chats')
           .doc(widget.buyerId)
           .collection('messages')
           .add(message.toMap());
 
-      // Update last message metadata
       await _service.db.collection('chats').doc(widget.buyerId).set({
         'buyerId': widget.buyerId,
         'lastMessageTime': FieldValue.serverTimestamp(),
@@ -97,7 +94,6 @@ class _BuyerChatPageState extends State<BuyerChatPage> {
 
       _messageController.clear();
 
-      // Scroll to bottom
       Future.delayed(const Duration(milliseconds: 300), () {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
@@ -353,8 +349,6 @@ class _BuyerChatPageState extends State<BuyerChatPage> {
           return const SizedBox.shrink();
         }
 
-        // ignore: unused_local_variable
-        final orderData = snapshot.data!.data() as Map<String, dynamic>;
         final orderNumber = orderId.substring(0, 8).toUpperCase();
 
         return Container(
